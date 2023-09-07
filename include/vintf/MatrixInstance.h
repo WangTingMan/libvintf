@@ -23,10 +23,12 @@
 #include <vintf/HalFormat.h>
 #include <vintf/VersionRange.h>
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
-class MatrixInstance {
+class LIBVINTF_API MatrixInstance {
    public:
     MatrixInstance();
     MatrixInstance(const MatrixInstance&);

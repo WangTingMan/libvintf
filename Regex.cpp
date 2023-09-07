@@ -26,24 +26,19 @@ Regex::~Regex() {
 
 void Regex::clear() {
     if (mImpl != nullptr) {
-        regfree(mImpl.get());
+        //regfree(mImpl.get());
         mImpl = nullptr;
     }
 }
 
 bool Regex::compile(const std::string& pattern) {
     clear();
-    mImpl = std::make_unique<regex_t>();
-    int status = regcomp(mImpl.get(), pattern.c_str(), REG_EXTENDED | REG_NEWLINE);
-    return status == 0;
+    mImpl = std::make_unique<std::regex>( pattern );
+    return true;
 }
 
 bool Regex::matches(const std::string& s) const {
-    regmatch_t match;
-    int status =
-        regexec(mImpl.get(), s.c_str(), 1 /* nmatch */, &match /* pmatch */, 0 /* flags */);
-    return status == 0 && match.rm_so == 0 && match.rm_eo >= 0 &&
-           static_cast<size_t>(match.rm_eo) == s.length();
+    return std::regex_match( s, *mImpl );
 }
 
 }  // namespace details

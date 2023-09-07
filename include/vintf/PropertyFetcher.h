@@ -16,10 +16,12 @@
 
 #pragma once
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
-class PropertyFetcher {
+class LIBVINTF_API PropertyFetcher {
    public:
     virtual ~PropertyFetcher() = default;
     virtual std::string getProperty(const std::string& key,

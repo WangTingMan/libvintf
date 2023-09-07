@@ -26,6 +26,8 @@
 #include "RuntimeInfo.h"
 #include "HalManifest.h"
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
@@ -74,15 +76,15 @@ bool parse(const std::string &s, VersionRange *vr);
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-bool parse(const std::string &s, VndkVersionRange *vr);
+LIBVINTF_API bool parse(const std::string &s, VndkVersionRange *vr);
 #pragma clang diagnostic pop
 
-bool parse(const std::string &s, KernelVersion *ver);
-bool parse(const std::string& s, FqInstance* fqInstance);
+LIBVINTF_API bool parse(const std::string &s, KernelVersion *ver);
+LIBVINTF_API bool parse(const std::string& s, FqInstance* fqInstance);
 
-bool parseKernelConfigInt(const std::string &s, int64_t *i);
-bool parseKernelConfigInt(const std::string &s, uint64_t *i);
-bool parseRange(const std::string &s, KernelConfigRangeValue *range);
+LIBVINTF_API bool parseKernelConfigInt(const std::string &s, int64_t *i);
+LIBVINTF_API bool parseKernelConfigInt(const std::string &s, uint64_t *i);
+LIBVINTF_API bool parseRange(const std::string &s, KernelConfigRangeValue *range);
 
 // Parse the KernelConfigValue in s, assuming type kctv->type, and store it in
 // kctv->value.
@@ -93,13 +95,13 @@ bool parseKernelConfigValue(const std::string &s, KernelConfigTypedValue *kctv);
 bool parseKernelConfigTypedValue(const std::string& s, KernelConfigTypedValue* kctv);
 
 // "100" <=> Version{kFakeAidlMajorVersion, 100}
-std::string aidlVersionToString(const Version& v);
-bool parseAidlVersion(const std::string& s, Version* version);
+LIBVINTF_API std::string aidlVersionToString(const Version& v);
+LIBVINTF_API bool parseAidlVersion(const std::string& s, Version* version);
 
 // "100" <=> VersionRange{kFakeAidlMajorVersion, 100}
 // "100-105" <=> VersionRange{kFakeAidlMajorVersion, 100, 105}
-std::string aidlVersionRangeToString(const VersionRange& vr);
-bool parseAidlVersionRange(const std::string& s, VersionRange* vr);
+LIBVINTF_API std::string aidlVersionRangeToString(const VersionRange& vr);
+LIBVINTF_API bool parseAidlVersionRange(const std::string& s, VersionRange* vr);
 
 // A string that describes the whole object, with versions of all
 // its components. For debugging and testing purposes only. This is not
@@ -110,26 +112,26 @@ std::string dump(const RuntimeInfo& ki, bool verbose = true);
 
 std::vector<std::string> expandInstances(const MatrixHal& req);
 
-std::string toFQNameString(const std::string& package, const Version& version,
+LIBVINTF_API std::string toFQNameString(const std::string& package, const Version& version,
                            const std::string& intf = "", const std::string& instance = "");
 
-std::string toFQNameString(const Version& version, const std::string& intf,
+LIBVINTF_API std::string toFQNameString(const Version& version, const std::string& intf,
                            const std::string& instance);
 
 // android.hardware.foo@1.0-1::IFoo/default.
 // Note that the format is extended to support a range of versions.
-std::string toFQNameString(const std::string& package, const VersionRange& range,
+LIBVINTF_API std::string toFQNameString(const std::string& package, const VersionRange& range,
                            const std::string& interface, const std::string& instance);
 
-std::string toFQNameString(const VersionRange& range, const std::string& interface,
+LIBVINTF_API std::string toFQNameString(const VersionRange& range, const std::string& interface,
                            const std::string& instance);
 
-std::string toFQNameString(const std::string& interface, const std::string& instance);
+LIBVINTF_API std::string toFQNameString(const std::string& interface, const std::string& instance);
 
-std::string toAidlFqnameString(const std::string& package, const std::string& interface,
+LIBVINTF_API std::string toAidlFqnameString(const std::string& package, const std::string& interface,
                                const std::string& instance = "");
 
-std::string_view parseApexName(std::string_view path);
+LIBVINTF_API std::string_view parseApexName(std::string_view path);
 
 } // namespace vintf
 } // namespace android

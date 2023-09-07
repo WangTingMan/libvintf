@@ -19,7 +19,7 @@
 
 #include "HalManifest.h"
 
-#include <dirent.h>
+#include <utils/direct.h>
 
 #include <mutex>
 #include <set>
@@ -528,6 +528,7 @@ CompatibilityMatrix HalManifest::generateCompatibleMatrix(bool optional) const {
             return true;
         }
 
+#if _MSC_VER > 1929
         matrix.add(MatrixHal{
             .format = e.format(),
             .name = e.package(),
@@ -535,7 +536,11 @@ CompatibilityMatrix HalManifest::generateCompatibleMatrix(bool optional) const {
             .optional = optional,
             .interfaces = {{e.interface(), HalInterface{e.interface(), {e.instance()}}}}});
         return true;
-    });
+#else
+        LOG(ERROR) << "buil error with 2019. So reurn true directly.";
+        return true;
+#endif
+    } );
     if (mType == SchemaType::FRAMEWORK) {
         matrix.mType = SchemaType::DEVICE;
         // VNDK does not need to be added for compatibility

@@ -30,6 +30,8 @@
 #include "MatrixKernel.h"
 #include "Version.h"
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
@@ -40,7 +42,7 @@ class VintfObjectRuntimeInfoTest;
 struct CompatibilityMatrix;
 
 // Runtime Info sent to OTA server
-struct RuntimeInfo {
+struct LIBVINTF_API RuntimeInfo {
 
     RuntimeInfo() {}
     virtual ~RuntimeInfo() = default;

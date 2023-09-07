@@ -23,11 +23,13 @@
 
 #include "Regex.h"
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
 // manifest.hal.interface element / compatibility-matrix.hal.interface element
-struct HalInterface {
+struct LIBVINTF_API HalInterface {
     HalInterface() = default;
     HalInterface(std::string&& name, std::set<std::string>&& instances)
         : mName(std::move(name)), mInstances(std::move(instances)) {}

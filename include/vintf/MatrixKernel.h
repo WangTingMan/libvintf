@@ -25,6 +25,8 @@
 #include "Level.h"
 #include "Version.h"
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
@@ -38,7 +40,7 @@ using KernelConfig = std::pair<KernelConfigKey, KernelConfigTypedValue>;
 
 // A <kernel> entry to a compatibility matrix represents a fragment of kernel
 // config requirements.
-struct MatrixKernel {
+struct LIBVINTF_API MatrixKernel {
 
     MatrixKernel() {}
     MatrixKernel(KernelVersion &&minLts, std::vector<KernelConfig> &&configs)

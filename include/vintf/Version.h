@@ -22,6 +22,8 @@
 #include <string>
 #include <utility>
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 

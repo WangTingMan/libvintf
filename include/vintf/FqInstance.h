@@ -22,6 +22,8 @@
 
 #include <vintf/FQName.h>
 
+#include <vintf/libvintf_exports.h>
+
 namespace android::vintf {
 
 // A wrapper around FQName to include instance name as well.
@@ -32,7 +34,7 @@ namespace android::vintf {
 //    // error handling
 // }
 // LOG(WARNING) << fqInstance.string();
-class FqInstance {
+class LIBVINTF_API FqInstance {
    public:
     const std::string& getPackage() const;
     size_t getMajorVersion() const;

@@ -22,6 +22,8 @@
 
 #include <vintf/VintfObject.h>
 
+#include <vintf/libvintf_exports.h>
+
 namespace android::vintf {
 
 /**
@@ -32,7 +34,7 @@ namespace android::vintf {
  * All getDevice* / getFramework* functions return nullptr. Instead, getRecovery* should be
  * used instead.
  */
-class VintfObjectRecovery : public VintfObject {
+class LIBVINTF_API VintfObjectRecovery : public VintfObject {
    public:
     /*
      * Get global instance. Results are cached.

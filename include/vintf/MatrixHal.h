@@ -27,11 +27,13 @@
 #include "MatrixInstance.h"
 #include "VersionRange.h"
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
 // A HAL entry to a compatibility matrix
-struct MatrixHal {
+struct LIBVINTF_API MatrixHal {
     using InstanceType = MatrixInstance;
 
     bool operator==(const MatrixHal &other) const;

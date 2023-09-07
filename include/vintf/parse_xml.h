@@ -21,14 +21,16 @@
 #include "HalManifest.h"
 #include "SerializeFlags.h"
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
-std::string toXml(const HalManifest& o, SerializeFlags::Type flags = SerializeFlags::EVERYTHING);
-std::string toXml(const CompatibilityMatrix& o,
+LIBVINTF_API std::string toXml(const HalManifest& o, SerializeFlags::Type flags = SerializeFlags::EVERYTHING);
+LIBVINTF_API std::string toXml(const CompatibilityMatrix& o,
                   SerializeFlags::Type flags = SerializeFlags::EVERYTHING);
-[[nodiscard]] bool fromXml(HalManifest* o, const std::string& xml, std::string* error = nullptr);
-[[nodiscard]] bool fromXml(CompatibilityMatrix* o, const std::string& xml,
+[[nodiscard]] LIBVINTF_API bool fromXml(HalManifest* o, const std::string& xml, std::string* error = nullptr);
+[[nodiscard]] LIBVINTF_API bool fromXml(CompatibilityMatrix* o, const std::string& xml,
                            std::string* error = nullptr);
 
 } // namespace vintf

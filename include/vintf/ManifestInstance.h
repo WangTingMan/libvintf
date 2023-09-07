@@ -25,10 +25,12 @@
 #include <vintf/TransportArch.h>
 #include <vintf/Version.h>
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
-class ManifestInstance {
+class LIBVINTF_API ManifestInstance {
    public:
     ManifestInstance();
     ManifestInstance(const ManifestInstance&);

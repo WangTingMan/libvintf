@@ -20,6 +20,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
@@ -53,7 +55,7 @@ enum Level : size_t {
     UNSPECIFIED = SIZE_MAX,
 };
 
-std::string GetDescription(Level level);
+LIBVINTF_API std::string GetDescription(Level level);
 
 }  // namespace vintf
 }  // namespace android

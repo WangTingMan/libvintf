@@ -22,11 +22,13 @@
 #include <set>
 #include <string>
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
 // System SDK versions provided for vendor apps.
-class SystemSdk {
+class LIBVINTF_API SystemSdk {
    public:
     SystemSdk() = default;
     SystemSdk(std::set<std::string>&& versions) : mVersions(std::move(versions)) {}

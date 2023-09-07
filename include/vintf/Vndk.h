@@ -21,11 +21,13 @@
 #include <set>
 #include <string>
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
 // deprecated. Kept here for libvintf backwards compatibility.
-struct [[deprecated]] VndkVersionRange {
+struct VndkVersionRange {
 
     VndkVersionRange() : VndkVersionRange(0u, 0u, 0u) {}
     VndkVersionRange(size_t s, size_t v, size_t p)
@@ -42,7 +44,7 @@ struct [[deprecated]] VndkVersionRange {
 };
 
 // deprecated. Kept here for libvintf backwards compatibility.
-struct [[deprecated]] Vndk {
+struct /*[[deprecated]]*/ Vndk {
 
     const VndkVersionRange &versionRange() const { return mVersionRange; }
     const std::set<std::string> &libraries() const { return mLibraries; }

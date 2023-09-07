@@ -38,6 +38,8 @@
 #include "WithFileName.h"
 #include "XmlFileGroup.h"
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
@@ -46,7 +48,7 @@ class CheckVintfUtils;
 }  // namespace details
 
 // Compatibility matrix defines what hardware does the framework requires.
-struct CompatibilityMatrix : public HalGroup<MatrixHal>,
+struct LIBVINTF_API CompatibilityMatrix : public HalGroup<MatrixHal>,
                              public XmlFileGroup<MatrixXmlFile>,
                              public WithFileName {
     // Create a framework compatibility matrix.

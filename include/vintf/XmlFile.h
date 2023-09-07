@@ -23,10 +23,12 @@
 #include "VersionRange.h"
 #include "XmlSchemaFormat.h"
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
-struct XmlFile {
+struct LIBVINTF_API XmlFile {
    public:
     inline const std::string& name() const { return mName; }
     inline const std::string& overriddenPath() const { return mOverriddenPath; }
@@ -37,7 +39,7 @@ struct XmlFile {
 };
 
 // An <xmlfile> entry in matrix
-struct MatrixXmlFile : public XmlFile {
+struct LIBVINTF_API MatrixXmlFile : public XmlFile {
     inline bool optional() const { return mOptional; }
     inline XmlSchemaFormat format() const { return mFormat; }
     inline const VersionRange& versionRange() const { return mVersionRange; }
@@ -53,7 +55,7 @@ struct MatrixXmlFile : public XmlFile {
 };
 
 // An <xmlfile> entry in manifest
-struct ManifestXmlFile : public XmlFile {
+struct LIBVINTF_API ManifestXmlFile : public XmlFile {
     inline const Version& version() const { return mVersion; }
     bool operator==(const ManifestXmlFile& other) const;
 

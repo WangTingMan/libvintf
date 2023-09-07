@@ -19,7 +19,10 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
+#ifndef _MSC_VER
 #include "com_android_apex.h"
+#endif
+
 #include "constants-private.h"
 
 using android::base::StartsWith;
@@ -85,6 +88,7 @@ status_t Apex::DeviceVintfDirs(FileSystem* fileSystem, PropertyFetcher* property
     }
     if (status != OK) return status;
 
+#ifndef _MSC_VER
     auto apexInfoList = com::android::apex::parseApexInfoList(xml.c_str());
     if (!apexInfoList.has_value()) {
         if (error) {
@@ -105,6 +109,8 @@ status_t Apex::DeviceVintfDirs(FileSystem* fileSystem, PropertyFetcher* property
             dirs->push_back(fmt::format("{}/{}/" VINTF_SUB_DIR, apexDir, apexInfo.getModuleName()));
         }
     }
+#endif
+
     return OK;
 }
 

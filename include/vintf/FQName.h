@@ -19,9 +19,15 @@
 #include <string>
 #include <vector>
 
+#include <vintf/libvintf_exports.h>
+
+#ifndef __attribute__
+#define __attribute__(...)
+#endif
+
 namespace android::vintf::details {
 
-struct FQName {
+struct LIBVINTF_API FQName {
     __attribute__((warn_unused_result)) static bool parse(const std::string& s, FQName* into);
 
     explicit FQName();

@@ -25,6 +25,8 @@
 
 #include "Version.h"
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 

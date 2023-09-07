@@ -18,6 +18,8 @@
 
 #include <string>
 
+#include <vintf/libvintf_exports.h>
+
 namespace android::vintf {
 
 // WithFileName is a class that attaches a name to an object.

@@ -17,7 +17,7 @@
 
 #include <vintf/FileSystem.h>
 
-#include <dirent.h>
+#include <utils/direct.h>
 
 #include <android-base/file.h>
 #include <android-base/strings.h>

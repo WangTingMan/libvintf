@@ -17,6 +17,8 @@
 #ifndef ANDROID_VINTF_SEPOLICY_H
 #define ANDROID_VINTF_SEPOLICY_H
 
+#include <vintf/libvintf_exports.h>
+
 
 namespace android {
 namespace vintf {

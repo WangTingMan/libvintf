@@ -23,10 +23,12 @@
 #include "Arch.h"
 #include "Transport.h"
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
-struct TransportArch {
+struct LIBVINTF_API TransportArch {
     Transport transport = Transport::EMPTY;
     Arch arch = Arch::ARCH_EMPTY;
     std::optional<std::string> ip;

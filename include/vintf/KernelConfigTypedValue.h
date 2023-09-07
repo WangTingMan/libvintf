@@ -22,6 +22,8 @@
 #include "KernelConfigType.h"
 #include "Tristate.h"
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
@@ -29,7 +31,7 @@ using KernelConfigIntValue = int64_t;
 using KernelConfigRangeValue = std::pair<uint64_t, uint64_t>;
 
 // compatibility-matrix.kernel.config.value item.
-struct KernelConfigTypedValue {
+struct LIBVINTF_API KernelConfigTypedValue {
 
     const static KernelConfigTypedValue gMissingConfig;
 

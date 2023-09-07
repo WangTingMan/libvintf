@@ -17,8 +17,15 @@
 #ifndef ANDROID_VINTF_REGEX_H_
 #define ANDROID_VINTF_REGEX_H_
 
+#ifdef _MSC_VER
+#include <regex>
+#else
 #include <regex.h>
+#endif
+
 #include <string>
+
+#include <vintf/libvintf_exports.h>
 
 namespace android {
 namespace vintf {
@@ -27,7 +34,7 @@ namespace details {
 // A wrapper class around regex.h. This is used instead of C++ <regex> library because
 // C++ regex library throws exceptions when an invalid regular expression is compiled.
 // Use Extended Regular Expression (ERE) syntax.
-class Regex {
+class LIBVINTF_API Regex {
    public:
     Regex() = default;
     ~Regex();
@@ -35,7 +42,7 @@ class Regex {
     Regex& operator=(const Regex&) = delete;
     Regex(const Regex&) = delete;
 
-    __attribute__((warn_unused_result)) bool compile(const std::string& pattern);
+    /*__attribute__((warn_unused_result))*/ bool compile(const std::string& pattern);
 
     bool matches(const std::string& s) const;
 
@@ -45,7 +52,7 @@ class Regex {
     static const Regex* Get(const std::string& pattern);
 
    private:
-    std::unique_ptr<regex_t> mImpl;
+    std::unique_ptr<std::regex> mImpl;
 
     void clear();
 };

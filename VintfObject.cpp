@@ -15,8 +15,6 @@
  */
 #include "VintfObject.h"
 
-#include <dirent.h>
-
 #include <algorithm>
 #include <functional>
 #include <memory>

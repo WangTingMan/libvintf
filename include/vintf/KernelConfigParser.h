@@ -24,10 +24,12 @@
 
 #include <utils/Errors.h>
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
-class KernelConfigParser {
+class LIBVINTF_API KernelConfigParser {
    public:
     KernelConfigParser(bool processComments = false, bool relaxedFormat = false);
 

@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
@@ -40,7 +42,7 @@ class ApexInterface {
 namespace details {
 
 // Provide default implementation for ApexInterface
-class Apex : public ApexInterface {
+class LIBVINTF_API Apex : public ApexInterface {
    public:
     Apex() = default;
     bool HasUpdate(FileSystem* fileSystem, PropertyFetcher* propertyFetcher) const override;

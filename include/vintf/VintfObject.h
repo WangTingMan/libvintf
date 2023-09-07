@@ -38,6 +38,8 @@
 #include <vintf/PropertyFetcher.h>
 #include <vintf/RuntimeInfo.h>
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
@@ -69,7 +71,7 @@ struct LockedRuntimeInfoCache {
  * - ObjectFactory<RuntimeInfo> fetches default RuntimeInfo for target and nothing for host
  * - PropertyFetcher fetches properties for target and nothing for host
  */
-class VintfObjectBuilder {
+class LIBVINTF_API VintfObjectBuilder {
    public:
     VintfObjectBuilder(std::unique_ptr<VintfObject>&& object) : mObject(std::move(object)) {}
     ~VintfObjectBuilder();
@@ -117,7 +119,7 @@ class VintfObjectCompatibleTest;
  * again when it is called again.
  * All these operations are thread-safe.
  */
-class VintfObject {
+class LIBVINTF_API VintfObject {
    public:
     virtual ~VintfObject() = default;
 
@@ -402,7 +404,7 @@ namespace details {
 // is called.
 // The sku string from ro.boot.product.hardware.sku is needed to build the ODM
 // manifest file name for legacy devices.
-std::vector<std::string> dumpFileList(const std::string& sku);
+LIBVINTF_API std::vector<std::string> dumpFileList(const std::string& sku);
 
 }  // namespace details
 

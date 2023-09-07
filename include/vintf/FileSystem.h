@@ -24,6 +24,8 @@
 
 #include <utils/Errors.h>
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
@@ -62,7 +64,7 @@ class WritableFileSystem : public FileSystem {
 namespace details {
 
 // Class that actually queries the file system.
-class FileSystemImpl : public FileSystem {
+class LIBVINTF_API FileSystemImpl : public FileSystem {
    public:
     status_t fetch(const std::string&, std::string*, std::string*) const override;
     status_t listFiles(const std::string&, std::vector<std::string>*, std::string*) const override;
@@ -70,7 +72,7 @@ class FileSystemImpl : public FileSystem {
 };
 
 // Class that does nothing.
-class FileSystemNoOp : public FileSystem {
+class LIBVINTF_API FileSystemNoOp : public FileSystem {
    public:
     status_t fetch(const std::string&, std::string*, std::string*) const override;
     status_t listFiles(const std::string&, std::vector<std::string>*, std::string*) const override;
@@ -79,7 +81,7 @@ class FileSystemNoOp : public FileSystem {
 };
 
 // The root is mounted to a given path.
-class FileSystemUnderPath : public FileSystem {
+class LIBVINTF_API FileSystemUnderPath : public FileSystem {
    public:
     FileSystemUnderPath(const std::string& rootdir);
     status_t fetch(const std::string& path, std::string* fetched,
@@ -99,7 +101,7 @@ class FileSystemUnderPath : public FileSystem {
 
 // A FileSystem object that can redirect access for one path
 // FileSystem is read via the internal impl.
-class PathReplacingFileSystem : public FileSystem {
+class LIBVINTF_API PathReplacingFileSystem : public FileSystem {
    public:
     // Use |impl| for any actual reads. Owns impl.
     PathReplacingFileSystem(std::string path_to_override, std::string path_replacement,

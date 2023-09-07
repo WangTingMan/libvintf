@@ -23,6 +23,8 @@
 #include "MatrixKernel.h"
 #include "Version.h"
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
@@ -32,7 +34,7 @@ struct StaticRuntimeInfo;
 }  // namespace details
 
 // KernelInfo includes kernel-specific information on a device.
-class KernelInfo {
+class LIBVINTF_API KernelInfo {
    public:
     KernelInfo() = default;
 

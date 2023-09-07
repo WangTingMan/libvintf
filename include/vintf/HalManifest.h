@@ -43,6 +43,8 @@
 #include "XmlFileGroup.h"
 #include "constants.h"
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
@@ -61,7 +63,7 @@ class FmOnlyVintfObject;
 
 // A HalManifest is reported by the hardware and query-able from
 // framework code. This is the API for the framework.
-struct HalManifest : public HalGroup<ManifestHal>,
+struct LIBVINTF_API HalManifest : public HalGroup<ManifestHal>,
                      public XmlFileGroup<ManifestXmlFile>,
                      public WithFileName {
    public:

@@ -1100,7 +1100,7 @@ struct SepolicyConverter : public XmlNodeConverter<Sepolicy> {
     }
 };
 
-struct [[deprecated]] VndkVersionRangeConverter : public XmlTextConverter<VndkVersionRange> {
+struct VndkVersionRangeConverter : public XmlTextConverter<VndkVersionRange> {
     std::string elementName() const override { return "version"; }
 };
 
@@ -1112,7 +1112,7 @@ struct VndkLibraryConverter : public XmlTextConverter<std::string> {
     std::string elementName() const override { return "library"; }
 };
 
-struct [[deprecated]] VndkConverter : public XmlNodeConverter<Vndk> {
+struct VndkConverter : public XmlNodeConverter<Vndk> {
     std::string elementName() const override { return "vndk"; }
     void mutateNode(const Vndk& object, NodeType* root,
                     const MutateNodeParam& param) const override {

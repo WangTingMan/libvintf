@@ -20,6 +20,8 @@
 #include <set>
 #include <string>
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 

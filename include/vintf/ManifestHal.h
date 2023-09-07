@@ -33,11 +33,13 @@
 #include <vintf/Version.h>
 #include <vintf/WithFileName.h>
 
+#include <vintf/libvintf_exports.h>
+
 namespace android {
 namespace vintf {
 
 // A component of HalManifest.
-struct ManifestHal : public WithFileName {
+struct LIBVINTF_API ManifestHal : public WithFileName {
     using InstanceType = ManifestInstance;
 
     ManifestHal() = default;
