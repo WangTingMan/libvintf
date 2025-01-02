@@ -17,6 +17,10 @@
 
 #include <gtest/gtest.h>
 
+#ifndef __ANDROID_API_U__
+#define __ANDROID_API_U__ 34
+#endif
+
 namespace android {
 
 static inline std::string PrintInstanceNameToString(
