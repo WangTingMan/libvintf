@@ -55,6 +55,7 @@ cc_test {
         "-O0",
         "-g",
         "-Wno-deprecated-declarations",
+        "-Wno-reorder-init-list",
     ],
     target: {
         android: {
@@ -102,6 +103,7 @@ cc_test {
     cflags: [
         "-O0",
         "-g",
+        "-Wno-reorder-init-list",
     ],
     target: {
         android: {
@@ -122,7 +124,6 @@ cc_test_host {
     name: "libvintffm_test",
     defaults: ["libvintffm-defaults"],
     static_libs: [
-        "libc++fs",
         "libgmock",
         "libvintffm",
     ],

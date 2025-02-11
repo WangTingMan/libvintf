@@ -48,12 +48,13 @@ class VintfObject;
 namespace details {
 class CheckVintfUtils;
 class FmOnlyVintfObject;
+class VintfObjectBuilder;
 
 template <typename T>
 struct LockedSharedPtr {
     std::shared_ptr<T> object;
     std::mutex mutex;
-    bool fetchedOnce = false;
+    std::optional<timespec> lastModified;
 };
 
 struct LockedRuntimeInfoCache {
@@ -62,6 +63,7 @@ struct LockedRuntimeInfoCache {
     RuntimeInfo::FetchFlags fetchedFlags = RuntimeInfo::FetchFlag::NONE;
 };
 
+<<<<<<< HEAD
 /**
  * DO NOT USE outside of libvintf. This is an implementation detail. Use VintfObject::Builder
  * instead.
@@ -90,6 +92,8 @@ class LIBVINTF_API VintfObjectBuilder {
     std::unique_ptr<VintfObject> mObject;
 };
 
+=======
+>>>>>>> 648a4af
 }  // namespace details
 
 namespace testing {
@@ -250,7 +254,6 @@ class LIBVINTF_API VintfObject {
     std::unique_ptr<FileSystem> mFileSystem;
     std::unique_ptr<ObjectFactory<RuntimeInfo>> mRuntimeInfoFactory;
     std::unique_ptr<PropertyFetcher> mPropertyFetcher;
-    std::unique_ptr<ApexInterface> mApex;
     details::LockedSharedPtr<HalManifest> mDeviceManifest;
     details::LockedSharedPtr<HalManifest> mFrameworkManifest;
     details::LockedSharedPtr<CompatibilityMatrix> mDeviceMatrix;
@@ -282,7 +285,6 @@ class LIBVINTF_API VintfObject {
     virtual const std::unique_ptr<FileSystem>& getFileSystem();
     virtual const std::unique_ptr<PropertyFetcher>& getPropertyFetcher();
     virtual const std::unique_ptr<ObjectFactory<RuntimeInfo>>& getRuntimeInfoFactory();
-    virtual const std::unique_ptr<ApexInterface>& getApex();
 
    public:
     /*
@@ -336,8 +338,10 @@ class LIBVINTF_API VintfObject {
                           std::string* error = nullptr);
     status_t addDirectoryManifests(const std::string& directory, HalManifest* manifests,
                                    bool ignoreSchemaType, std::string* error);
+    status_t addDirectoriesManifests(const std::vector<std::string>& directories,
+                                     HalManifest* manifests, bool ignoreSchemaType,
+                                     std::string* error);
     status_t fetchDeviceHalManifest(HalManifest* out, std::string* error = nullptr);
-    status_t fetchDeviceHalManifestMinusApex(HalManifest* out, std::string* error = nullptr);
     status_t fetchDeviceHalManifestApex(HalManifest* out, std::string* error = nullptr);
     status_t fetchDeviceMatrix(CompatibilityMatrix* out, std::string* error = nullptr);
     status_t fetchOdmHalManifest(HalManifest* out, std::string* error = nullptr);
@@ -345,6 +349,7 @@ class LIBVINTF_API VintfObject {
                                  std::string* error = nullptr);
     status_t fetchVendorHalManifest(HalManifest* out, std::string* error = nullptr);
     status_t fetchFrameworkHalManifest(HalManifest* out, std::string* error = nullptr);
+    status_t fetchFrameworkHalManifestApex(HalManifest* out, std::string* error = nullptr);
 
     status_t fetchUnfilteredFrameworkHalManifest(HalManifest* out, std::string* error);
     void filterHalsByDeviceManifestLevel(HalManifest* out);
@@ -355,30 +360,29 @@ class LIBVINTF_API VintfObject {
 
     using ChildrenMap = std::multimap<std::string, std::string>;
     static bool IsHalDeprecated(const MatrixHal& oldMatrixHal,
+                                const std::string& oldMatrixHalFileName,
                                 const CompatibilityMatrix& targetMatrix,
                                 const std::shared_ptr<const HalManifest>& halManifest,
                                 const ChildrenMap& childrenMap, std::string* appendedError);
     static bool IsInstanceDeprecated(const MatrixInstance& oldMatrixInstance,
+                                     const std::string& oldMatrixInstanceFileName,
                                      const CompatibilityMatrix& targetMatrix,
                                      const std::shared_ptr<const HalManifest>& halManifest,
                                      const ChildrenMap& childrenMap, std::string* appendedError);
 
     static android::base::Result<std::vector<FqInstance>> GetListedInstanceInheritance(
-        HalFormat format, const std::string& package, const Version& version,
-        const std::string& interface, const std::string& instance,
+        HalFormat format, ExclusiveTo exclusiveTo, const std::string& package,
+        const Version& version, const std::string& interface, const std::string& instance,
         const std::shared_ptr<const HalManifest>& halManifest, const ChildrenMap& childrenMap);
     static bool IsInstanceListed(const std::shared_ptr<const HalManifest>& halManifest,
-                                 HalFormat format, const FqInstance& fqInstance);
+                                 HalFormat format, ExclusiveTo exclusiveTo,
+                                 const FqInstance& fqInstance);
     static android::base::Result<void> IsFqInstanceDeprecated(
-        const CompatibilityMatrix& targetMatrix, HalFormat format, const FqInstance& fqInstance,
-        const std::shared_ptr<const HalManifest>& halManifest);
+        const CompatibilityMatrix& targetMatrix, HalFormat format, ExclusiveTo exclusiveTo,
+        const FqInstance& fqInstance, const std::shared_ptr<const HalManifest>& halManifest);
 
    public:
-    /** Builder of VintfObject. See VintfObjectBuilder for details. */
-    class Builder : public details::VintfObjectBuilder {
-       public:
-        Builder();
-    };
+    class Builder;
 
    protected:
     /* Empty VintfObject without any dependencies. Used by Builder and subclasses. */
@@ -396,6 +400,33 @@ enum : int32_t {
 // exposed for testing.
 namespace details {
 
+/**
+ * DO NOT USE outside of libvintf. This is an implementation detail. Use VintfObject::Builder
+ * instead.
+ *
+ * A builder of VintfObject. If a dependency is not specified, the default behavior is used.
+ * - FileSystem fetch from "/" for target and fetch no files for host
+ * - ObjectFactory<RuntimeInfo> fetches default RuntimeInfo for target and nothing for host
+ * - PropertyFetcher fetches properties for target and nothing for host
+ */
+class VintfObjectBuilder {
+   public:
+    VintfObjectBuilder(std::unique_ptr<VintfObject>&& object) : mObject(std::move(object)) {}
+    ~VintfObjectBuilder();
+    VintfObjectBuilder& setFileSystem(std::unique_ptr<FileSystem>&&);
+    VintfObjectBuilder& setRuntimeInfoFactory(std::unique_ptr<ObjectFactory<RuntimeInfo>>&&);
+    VintfObjectBuilder& setPropertyFetcher(std::unique_ptr<PropertyFetcher>&&);
+    template <typename VintfObjectType = VintfObject>
+    std::unique_ptr<VintfObjectType> build() {
+        return std::unique_ptr<VintfObjectType>(
+            static_cast<VintfObjectType*>(buildInternal().release()));
+    }
+
+   private:
+    std::unique_ptr<VintfObject> buildInternal();
+    std::unique_ptr<VintfObject> mObject;
+};
+
 // Convenience function to dump all files and directories that could be read
 // by calling Get(Framework|Device)(HalManifest|CompatibilityMatrix). The list
 // include files that may not actually be read when the four functions are called
@@ -407,6 +438,12 @@ namespace details {
 LIBVINTF_API std::vector<std::string> dumpFileList(const std::string& sku);
 
 }  // namespace details
+
+/** Builder of VintfObject. See VintfObjectBuilder for details. */
+class VintfObject::Builder : public details::VintfObjectBuilder {
+   public:
+    Builder();
+};
 
 }  // namespace vintf
 }  // namespace android

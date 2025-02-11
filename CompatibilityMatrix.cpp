@@ -435,12 +435,13 @@ bool CompatibilityMatrix::addAllAsOptional(CompatibilityMatrix* inputMatrix, std
 }
 
 bool CompatibilityMatrix::forEachInstanceOfVersion(
-    HalFormat format, const std::string& package, const Version& expectVersion,
-    const std::function<bool(const MatrixInstance&)>& func) const {
+    HalFormat format, ExclusiveTo exclusiveTo, const std::string& package,
+    const Version& expectVersion, const std::function<bool(const MatrixInstance&)>& func) const {
     for (const MatrixHal* hal : getHals(package)) {
         bool cont = hal->forEachInstance([&](const MatrixInstance& matrixInstance) {
             if (matrixInstance.format() == format &&
-                matrixInstance.versionRange().contains(expectVersion)) {
+                matrixInstance.versionRange().contains(expectVersion) &&
+                matrixInstance.exclusiveTo() == exclusiveTo) {
                 return func(matrixInstance);
             }
             return true;
@@ -450,11 +451,12 @@ bool CompatibilityMatrix::forEachInstanceOfVersion(
     return true;
 }
 
-bool CompatibilityMatrix::matchInstance(HalFormat format, const std::string& halName,
-                                        const Version& version, const std::string& interfaceName,
+bool CompatibilityMatrix::matchInstance(HalFormat format, ExclusiveTo exclusiveTo,
+                                        const std::string& halName, const Version& version,
+                                        const std::string& interfaceName,
                                         const std::string& instance) const {
     bool found = false;
-    (void)forEachInstanceOfInterface(format, halName, version, interfaceName,
+    (void)forEachInstanceOfInterface(format, exclusiveTo, halName, version, interfaceName,
                                      [&found, &instance](const auto& e) {
                                          found |= (e.matchInstance(instance));
                                          return !found;  // if not found, continue
@@ -462,22 +464,13 @@ bool CompatibilityMatrix::matchInstance(HalFormat format, const std::string& hal
     return found;
 }
 
-std::vector<VersionRange> CompatibilityMatrix::getSepolicyVersions() const {
+std::vector<SepolicyVersionRange> CompatibilityMatrix::getSepolicyVersions() const {
     if (type() == SchemaType::FRAMEWORK) return framework.mSepolicy.sepolicyVersions();
     return {};
 }
 
 std::string CompatibilityMatrix::getVendorNdkVersion() const {
     return type() == SchemaType::DEVICE ? device.mVendorNdk.version() : "";
-}
-
-Level CompatibilityMatrix::getSourceMatrixLevel(const MatrixKernel* matrixKernel) const {
-    CHECK(std::find_if(framework.mKernels.begin(), framework.mKernels.end(),
-                       [matrixKernel](const auto& e) { return &e == matrixKernel; }) !=
-          framework.mKernels.end());
-    Level ret = matrixKernel->getSourceMatrixLevel();
-    if (ret != Level::UNSPECIFIED) return ret;
-    return level();
 }
 
 KernelVersion CompatibilityMatrix::getLatestKernelMinLts() const {

@@ -19,6 +19,7 @@
 
 #include <string>
 
+#include <vintf/ExclusiveTo.h>
 #include <vintf/FqInstance.h>
 #include <vintf/HalFormat.h>
 #include <vintf/VersionRange.h>
@@ -38,15 +39,16 @@ class LIBVINTF_API MatrixInstance {
 
     using VersionType = VersionRange;
     // fqInstance.version is ignored. Version range is provided separately.
-    MatrixInstance(HalFormat format, FqInstance&& fqInstance, VersionRange&& range, bool optional,
-                   bool isRegex);
-    MatrixInstance(HalFormat format, const FqInstance fqInstance, const VersionRange& range,
-                   bool optional, bool isRegex);
+    MatrixInstance(HalFormat format, ExclusiveTo exclusiveTo, FqInstance&& fqInstance,
+                   VersionRange&& range, bool optional, bool isRegex);
+    MatrixInstance(HalFormat format, ExclusiveTo exclusiveTo, const FqInstance fqInstance,
+                   const VersionRange& range, bool optional, bool isRegex);
     const std::string& package() const;
     const VersionRange& versionRange() const;
     std::string interface() const;
     bool optional() const;
     HalFormat format() const;
+    ExclusiveTo exclusiveTo() const;
 
     bool isSatisfiedBy(const FqInstance& provided) const;
 
@@ -77,6 +79,7 @@ class LIBVINTF_API MatrixInstance {
 
    private:
     HalFormat mFormat = HalFormat::HIDL;
+    ExclusiveTo mExclusiveTo = ExclusiveTo::EMPTY;
     FqInstance mFqInstance;
     VersionRange mRange;
     bool mOptional = false;

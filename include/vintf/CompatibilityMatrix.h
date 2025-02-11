@@ -70,7 +70,7 @@ struct LIBVINTF_API CompatibilityMatrix : public HalGroup<MatrixHal>,
 
     std::string getVendorNdkVersion() const;
 
-    std::vector<VersionRange> getSepolicyVersions() const;
+    std::vector<SepolicyVersionRange> getSepolicyVersions() const;
 
     bool add(MatrixHal&&, std::string* error = nullptr);
     // Move all hals from another CompatibilityMatrix to this.
@@ -78,7 +78,8 @@ struct LIBVINTF_API CompatibilityMatrix : public HalGroup<MatrixHal>,
 
    protected:
     bool forEachInstanceOfVersion(
-        HalFormat format, const std::string& package, const Version& expectVersion,
+        HalFormat format, ExclusiveTo exclusiveTo, const std::string& package,
+        const Version& expectVersion,
         const std::function<bool(const MatrixInstance&)>& func) const override;
 
    private:
@@ -147,12 +148,9 @@ struct LIBVINTF_API CompatibilityMatrix : public HalGroup<MatrixHal>,
 
     // Return whether instance is in "this"; that is, instance is in any <instance> tag or
     // matches any <regex-instance> tag.
-    bool matchInstance(HalFormat format, const std::string& halName, const Version& version,
-                       const std::string& interfaceName, const std::string& instance) const;
-
-    // Return the level of the matrixKernel object that it is originally from.
-    // Prerequisite: matrixKernel is in mKernels.
-    Level getSourceMatrixLevel(const MatrixKernel* matrixKernel) const;
+    bool matchInstance(HalFormat format, ExclusiveTo exclusiveTo, const std::string& halName,
+                       const Version& version, const std::string& interfaceName,
+                       const std::string& instance) const;
 
     // Return the minlts of the latest <kernel>, or empty value if any error (e.g. this is not an
     // FCM, or there are no <kernel> tags).

@@ -17,10 +17,17 @@
 
 #include <vintf/FileSystem.h>
 
+<<<<<<< HEAD
 #include <utils/direct.h>
 
+=======
+>>>>>>> 648a4af
 #include <android-base/file.h>
 #include <android-base/strings.h>
+
+#include <ranges>
+
+#include <dirent.h>
 
 namespace android {
 namespace vintf {
@@ -64,7 +71,7 @@ status_t FileSystemImpl::listFiles(const std::string& path, std::vector<std::str
     return -saved_errno;
 }
 
-status_t FileSystemImpl::modifiedTime(const std::string& path, int64_t* mtime,
+status_t FileSystemImpl::modifiedTime(const std::string& path, timespec* mtime,
                                       std::string* error) const {
     struct stat stat_buf;
     if (stat(path.c_str(), &stat_buf) != 0) {
@@ -74,7 +81,7 @@ status_t FileSystemImpl::modifiedTime(const std::string& path, int64_t* mtime,
         }
         return saved_errno == 0 ? UNKNOWN_ERROR : -saved_errno;
     }
-    *mtime = stat_buf.st_mtime;
+    *mtime = stat_buf.st_mtim;
     return OK;
 }
 
@@ -87,7 +94,7 @@ status_t FileSystemNoOp::listFiles(const std::string&, std::vector<std::string>*
     return NAME_NOT_FOUND;
 }
 
-status_t FileSystemNoOp::modifiedTime(const std::string&, int64_t*, std::string*) const {
+status_t FileSystemNoOp::modifiedTime(const std::string&, timespec*, std::string*) const {
     return NAME_NOT_FOUND;
 }
 
@@ -108,7 +115,7 @@ status_t FileSystemUnderPath::listFiles(const std::string& path, std::vector<std
     return mImpl.listFiles(mRootDir + path, out, error);
 }
 
-status_t FileSystemUnderPath::modifiedTime(const std::string& path, int64_t* mtime,
+status_t FileSystemUnderPath::modifiedTime(const std::string& path, timespec* mtime,
                                            std::string* error) const {
     return mImpl.modifiedTime(mRootDir + path, mtime, error);
 }
@@ -117,21 +124,21 @@ const std::string& FileSystemUnderPath::getRootDir() const {
     return mRootDir;
 }
 
-PathReplacingFileSystem::PathReplacingFileSystem(std::string path_to_replace,
-                                                 std::string path_replacement,
-                                                 std::unique_ptr<FileSystem> impl)
-    : path_to_replace_{std::move(path_to_replace)},
-      path_replacement_{std::move(path_replacement)},
-      impl_{std::move(impl)} {
+static std::string enforceTrailingSlash(const std::string& path) {
+    if (android::base::EndsWith(path, '/')) {
+        return path;
+    }
+    return path + "/";
+}
+
+PathReplacingFileSystem::PathReplacingFileSystem(
+    std::unique_ptr<FileSystem> impl, const std::map<std::string, std::string>& path_replacements)
+    : impl_{std::move(impl)} {
     // Enforce a trailing slash on the path-to-be-replaced, prevents
     // the problem (for example) of /foo matching and changing /fooxyz
-    if (!android::base::EndsWith(path_to_replace_, '/')) {
-        path_to_replace_ += "/";
-    }
-    // Enforce a trailing slash on the replacement path.  This ensures
-    // we are replacing a directory with a directory.
-    if (!android::base::EndsWith(path_replacement_, '/')) {
-        path_replacement_ += "/";
+    for (const auto& [to_replace, replacement] : path_replacements) {
+        path_replacements_.emplace(enforceTrailingSlash(to_replace),
+                                   enforceTrailingSlash(replacement));
     }
 }
 
@@ -145,18 +152,17 @@ status_t PathReplacingFileSystem::listFiles(const std::string& path, std::vector
     return impl_->listFiles(path_replace(path), out, error);
 }
 
-status_t PathReplacingFileSystem::modifiedTime(const std::string& path, int64_t* mtime,
+status_t PathReplacingFileSystem::modifiedTime(const std::string& path, timespec* mtime,
                                                std::string* error) const {
     return impl_->modifiedTime(path_replace(path), mtime, error);
 }
 
 std::string PathReplacingFileSystem::path_replace(std::string_view path) const {
-    std::string retstr;
-    if (android::base::ConsumePrefix(&path, path_to_replace_)) {
-        retstr.reserve(path_replacement_.size() + path.size());
-        retstr.append(path_replacement_);
-        retstr.append(path);
-        return retstr;
+    // reverse for "longer match wins".
+    for (const auto& [to_replace, replacement] : path_replacements_ | std::views::reverse) {
+        if (android::base::ConsumePrefix(&path, to_replace)) {
+            return replacement + std::string{path};
+        }
     }
     return std::string{path};
 }

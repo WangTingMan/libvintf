@@ -15,7 +15,8 @@
  */
 #include "Apex.h"
 
-#include <android-base/format.h>
+#include <format>
+
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
@@ -27,9 +28,7 @@
 
 using android::base::StartsWith;
 
-namespace android {
-namespace vintf {
-namespace details {
+namespace android::vintf::apex {
 
 static bool isApexReady(PropertyFetcher* propertyFetcher) {
 #ifdef LIBVINTF_TARGET
@@ -41,45 +40,19 @@ static bool isApexReady(PropertyFetcher* propertyFetcher) {
 #endif
 }
 
-status_t Apex::DeviceVintfDirs(FileSystem* fileSystem, PropertyFetcher* propertyFetcher,
-                               std::vector<std::string>* dirs, std::string* error) {
-    std::string apexInfoFile = kApexInfoFile;
+static status_t GetVintfDirs(FileSystem* fileSystem, PropertyFetcher* propertyFetcher,
+                             std::vector<std::string>* dirs, std::string* error,
+                             std::function<bool(const std::string&)> filter) {
+    std::string apexInfoFile = details::kApexInfoFile;
     std::string apexDir = "/apex";
     if (!isApexReady(propertyFetcher)) {
-        apexInfoFile = kBootstrapApexInfoFile;
+        apexInfoFile = details::kBootstrapApexInfoFile;
         apexDir = "/bootstrap-apex";
     }
-    // Update cached mtime_
-    int64_t mtime{};
-    auto status = fileSystem->modifiedTime(apexInfoFile, &mtime, error);
-
-    if (status != OK) {
-        switch (status) {
-            case NAME_NOT_FOUND:
-                status = OK;
-                break;
-            case -EACCES:
-                // Don't error out on access errors, but log it
-                LOG(WARNING) << "APEX Device VINTF Dirs: EACCES: "
-                             << (error ? *error : "(unknown error message)");
-                status = OK;
-                break;
-            default:
-                break;
-        }
-
-        if ((status == OK) && (error)) {
-            error->clear();
-        }
-
-        return status;
-    }
-
-    mtime_ = mtime;
 
     // Load apex-info-list
     std::string xml;
-    status = fileSystem->fetch(apexInfoFile, &xml, error);
+    auto status = fileSystem->fetch(apexInfoFile, &xml, error);
     if (status == NAME_NOT_FOUND) {
         if (error) {
             error->clear();
@@ -92,7 +65,7 @@ status_t Apex::DeviceVintfDirs(FileSystem* fileSystem, PropertyFetcher* property
     auto apexInfoList = com::android::apex::parseApexInfoList(xml.c_str());
     if (!apexInfoList.has_value()) {
         if (error) {
-            *error = std::string("Not a valid XML ") + kApexInfoFile;
+            *error = std::string("Not a valid XML: ") + apexInfoFile;
         }
         return UNKNOWN_ERROR;
     }
@@ -101,38 +74,52 @@ status_t Apex::DeviceVintfDirs(FileSystem* fileSystem, PropertyFetcher* property
     for (const auto& apexInfo : apexInfoList->getApexInfo()) {
         // Skip non-active apexes
         if (!apexInfo.getIsActive()) continue;
-        // Skip if no preinstalled paths. This shouldn't happen but XML schema says it's optional.
-        if (!apexInfo.hasPreinstalledModulePath()) continue;
 
-        const std::string& path = apexInfo.getPreinstalledModulePath();
-        if (StartsWith(path, "/vendor/apex/") || StartsWith(path, "/system/vendor/apex/")) {
-            dirs->push_back(fmt::format("{}/{}/" VINTF_SUB_DIR, apexDir, apexInfo.getModuleName()));
+        if (filter(apexInfo.getPartition())) {
+            dirs->push_back(std::format("{}/{}/" VINTF_SUB_DIR, apexDir, apexInfo.getModuleName()));
         }
     }
+<<<<<<< HEAD
 #endif
 
+=======
+    LOG(INFO) << "Loaded APEX Infos from " << apexInfoFile;
+>>>>>>> 648a4af
     return OK;
 }
 
-// Returns true when /apex/apex-info-list.xml is updated
-bool Apex::HasUpdate(FileSystem* fileSystem, PropertyFetcher* propertyFetcher) const {
+std::optional<timespec> GetModifiedTime(FileSystem* fileSystem, PropertyFetcher* propertyFetcher) {
+    std::string apexInfoFile = details::kApexInfoFile;
     if (!isApexReady(propertyFetcher)) {
-        return false;
+        apexInfoFile = details::kBootstrapApexInfoFile;
     }
 
-    int64_t mtime{};
+    timespec mtime{};
     std::string error;
-    status_t status = fileSystem->modifiedTime(kApexInfoFile, &mtime, &error);
+    status_t status = fileSystem->modifiedTime(apexInfoFile, &mtime, &error);
     if (status == NAME_NOT_FOUND) {
-        return false;
+        return std::nullopt;
     }
     if (status != OK) {
         LOG(ERROR) << error;
-        return false;
+        return std::nullopt;
     }
-    return mtime != mtime_;
+    return mtime;
 }
 
-}  // namespace details
-}  // namespace vintf
-}  // namespace android
+status_t GetDeviceVintfDirs(FileSystem* fileSystem, PropertyFetcher* propertyFetcher,
+                            std::vector<std::string>* dirs, std::string* error) {
+    return GetVintfDirs(fileSystem, propertyFetcher, dirs, error, [](const std::string& partition) {
+        return partition.compare("VENDOR") == 0 || partition.compare("ODM") == 0;
+    });
+}
+
+status_t GetFrameworkVintfDirs(FileSystem* fileSystem, PropertyFetcher* propertyFetcher,
+                               std::vector<std::string>* dirs, std::string* error) {
+    return GetVintfDirs(fileSystem, propertyFetcher, dirs, error, [](const std::string& partition) {
+        return partition.compare("SYSTEM") == 0 || partition.compare("SYSTEM_EXT") == 0 ||
+               partition.compare("PRODUCT") == 0;
+    });
+}
+
+}  // namespace android::vintf::apex

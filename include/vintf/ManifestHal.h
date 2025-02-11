@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 
+#include <vintf/ExclusiveTo.h>
 #include <vintf/FqInstance.h>
 #include <vintf/HalFormat.h>
 #include <vintf/HalInterface.h>
@@ -50,6 +51,10 @@ struct LIBVINTF_API ManifestHal : public WithFileName {
     std::string name;
     std::vector<Version> versions;
     TransportArch transportArch;
+    // If this is set to something other than EMPTY, the service is only
+    // accessible by specific means like through a Trusty VM, and not
+    // available on the host device.
+    ExclusiveTo exclusiveTo = ExclusiveTo::EMPTY;
 
     inline Transport transport() const {
         return transportArch.transport;
@@ -59,13 +64,19 @@ struct LIBVINTF_API ManifestHal : public WithFileName {
     inline std::optional<std::string> ip() const { return transportArch.ip; }
     inline std::optional<uint64_t> port() const { return transportArch.port; }
 
+    ExclusiveTo getExclusiveTo() const { return exclusiveTo; }
     inline const std::string& getName() const { return name; }
+    inline bool updatableViaSystem() const { return mUpdatableViaSystem; }
 
     // Assume isValid().
     bool forEachInstance(const std::function<bool(const ManifestInstance&)>& func) const;
 
     bool isOverride() const { return mIsOverride; }
     const std::optional<std::string>& updatableViaApex() const { return mUpdatableViaApex; }
+
+    // Returns the name of the accessor interface for this HAL.
+    // If not set, no accessor will be used.
+    const std::optional<std::string>& accessor() const { return mAccessor; }
 
     // When true, the existence of this <hal> tag means the component does NOT
     // exist on the device. This is useful for ODM manifests to specify that
@@ -101,7 +112,9 @@ struct LIBVINTF_API ManifestHal : public WithFileName {
     bool verifyInstance(const FqInstance& fqInstance, std::string* error = nullptr) const;
 
     bool mIsOverride = false;
+    std::optional<std::string> mAccessor;
     std::optional<std::string> mUpdatableViaApex;
+    bool mUpdatableViaSystem = false;
     // All instances specified with <fqname> and <version> x <interface> x <instance>
     std::set<ManifestInstance> mManifestInstances;
 

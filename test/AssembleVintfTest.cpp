@@ -96,7 +96,7 @@ TEST_F(AssembleVintfTest, FrameworkMatrixEmpty) {
     addInput("compatibility_matrix.empty.xml", xmlEmpty);
     setFakeEnvs({
         {"POLICYVERS", "30"},
-        {"PLATFORM_SEPOLICY_VERSION", "10000.0"},
+        {"PLATFORM_SEPOLICY_VERSION", "202404"},
         {"FRAMEWORK_VBMETA_VERSION", "1.0"},
     });
     getInstance()->addKernelConfigInputStream({3, 18, 0}, "android-base.config",
@@ -149,7 +149,7 @@ TEST_F(AssembleVintfTest, FrameworkMatrixEmpty) {
         "    </kernel>\n"
         "    <sepolicy>\n"
         "        <kernel-sepolicy-version>30</kernel-sepolicy-version>\n"
-        "        <sepolicy-version>10000.0</sepolicy-version>\n"
+        "        <sepolicy-version>202404</sepolicy-version>\n"
         "    </sepolicy>\n"
         "    <avb>\n"
         "        <vbmeta-version>1.0</vbmeta-version>\n"
@@ -167,7 +167,7 @@ TEST_F(AssembleVintfTest, FrameworkMatrix) {
         "    </kernel>\n"
         "    <sepolicy>\n"
         "        <kernel-sepolicy-version>30</kernel-sepolicy-version>\n"
-        "        <sepolicy-version>10000.0</sepolicy-version>\n"
+        "        <sepolicy-version>202404</sepolicy-version>\n"
         "    </sepolicy>\n"
         "    <avb>\n"
         "        <vbmeta-version>1.0</vbmeta-version>\n"
@@ -239,7 +239,7 @@ TEST_F(AssembleVintfTest, FrameworkMatrix) {
                "        </interface>\n"
                "    </hal>\n"
                "    <sepolicy>\n"
-               "        <version>10000.0</version>\n"
+               "        <version>202404</version>\n"
                "    </sepolicy>\n"
                "</manifest>\n";
     };
@@ -406,13 +406,13 @@ TEST_F(AssembleVintfTest, ManifestSystemSdk) {
 const std::string gEmptyOutManifest =
     "<manifest " + kMetaVersionStr + " type=\"device\">\n"
     "    <sepolicy>\n"
-    "        <version>10000.0</version>\n"
+    "        <version>202404</version>\n"
     "    </sepolicy>\n"
     "</manifest>\n";
 
 TEST_F(AssembleVintfTest, EmptyManifest) {
     const std::string emptyManifest = "<manifest " + kMetaVersionStr + " type=\"device\" />";
-    setFakeEnvs({{"BOARD_SEPOLICY_VERS", "10000.0"}, {"IGNORE_TARGET_FCM_VERSION", "true"}});
+    setFakeEnvs({{"BOARD_SEPOLICY_VERS", "202404"}, {"IGNORE_TARGET_FCM_VERSION", "true"}});
     addInput("manifest.empty.xml", emptyManifest);
     EXPECT_TRUE(getInstance()->assemble());
     EXPECT_IN(gEmptyOutManifest, getOutput());
@@ -420,7 +420,7 @@ TEST_F(AssembleVintfTest, EmptyManifest) {
 
 TEST_F(AssembleVintfTest, DeviceFrameworkMatrixOptional) {
     setFakeEnvs({{"POLICYVERS", "30"},
-                 {"PLATFORM_SEPOLICY_VERSION", "10000.0"},
+                 {"PLATFORM_SEPOLICY_VERSION", "202404"},
                  {"PLATFORM_SEPOLICY_COMPAT_VERSIONS", "26.0 27.0"},
                  {"FRAMEWORK_VBMETA_VERSION", "1.0"},
                  {"PRODUCT_ENFORCE_VINTF_MANIFEST", "true"}});
@@ -453,7 +453,7 @@ TEST_F(AssembleVintfTest, DeviceFrameworkMatrixOptional) {
         "        <kernel-sepolicy-version>30</kernel-sepolicy-version>\n"
         "        <sepolicy-version>26.0</sepolicy-version>\n"
         "        <sepolicy-version>27.0</sepolicy-version>\n"
-        "        <sepolicy-version>10000.0</sepolicy-version>\n"
+        "        <sepolicy-version>202404</sepolicy-version>\n"
         "    </sepolicy>\n"
         "    <avb>\n"
         "        <vbmeta-version>1.0</vbmeta-version>\n"
@@ -464,7 +464,7 @@ TEST_F(AssembleVintfTest, DeviceFrameworkMatrixOptional) {
 
 TEST_F(AssembleVintfTest, DeviceFrameworkMatrixRequired) {
     setFakeEnvs({{"POLICYVERS", "30"},
-                 {"PLATFORM_SEPOLICY_VERSION", "10000.0"},
+                 {"PLATFORM_SEPOLICY_VERSION", "202404"},
                  {"PLATFORM_SEPOLICY_COMPAT_VERSIONS", "26.0 27.0"},
                  {"FRAMEWORK_VBMETA_VERSION", "1.0"},
                  {"PRODUCT_ENFORCE_VINTF_MANIFEST", "true"}});
@@ -487,7 +487,7 @@ TEST_F(AssembleVintfTest, DeviceFrameworkMatrixRequired) {
 
 TEST_F(AssembleVintfTest, DeviceFrameworkMatrixMultiple) {
     setFakeEnvs({{"POLICYVERS", "30"},
-                 {"PLATFORM_SEPOLICY_VERSION", "10000.0"},
+                 {"PLATFORM_SEPOLICY_VERSION", "202404"},
                  {"PLATFORM_SEPOLICY_COMPAT_VERSIONS", "26.0 27.0"},
                  {"FRAMEWORK_VBMETA_VERSION", "1.0"},
                  {"PRODUCT_ENFORCE_VINTF_MANIFEST", "true"}});
@@ -540,7 +540,7 @@ TEST_F(AssembleVintfTest, DeviceFrameworkMatrixMultiple) {
         "        <kernel-sepolicy-version>30</kernel-sepolicy-version>\n"
         "        <sepolicy-version>26.0</sepolicy-version>\n"
         "        <sepolicy-version>27.0</sepolicy-version>\n"
-        "        <sepolicy-version>10000.0</sepolicy-version>\n"
+        "        <sepolicy-version>202404</sepolicy-version>\n"
         "    </sepolicy>\n"
         "    <avb>\n"
         "        <vbmeta-version>1.0</vbmeta-version>\n"
@@ -582,6 +582,10 @@ TEST_F(AssembleVintfTest, AidlAndHidlNames) {
         "        <fqname>@1.0::IFoo/default</fqname>\n"
         "    </hal>\n"
         "</manifest>\n");
+    std::vector<AidlInterfaceMetadata> aidl{
+        {.name = "android.system.foo",
+         .types = {"android.system.foo.IFoo"}}};
+    setFakeAidlMetadata(aidl);
     EXPECT_TRUE(getInstance()->assemble());
     EXPECT_IN(
         "    <hal format=\"aidl\">\n"
@@ -632,7 +636,7 @@ TEST_F(AssembleVintfTest, NoAutoSetKernelFcmWithConfig) {
 TEST_F(AssembleVintfTest, NoKernelFcmT) {
     addInput("manifest.xml",
         StringPrintf(R"(<manifest %s type="device" target-level="%s">
-                            <kernel target-level="10"/>
+                            <kernel target-level="8"/>
                         </manifest>)", kMetaVersionStr.c_str(),
                         to_string(details::kEnforceDeviceManifestNoKernelLevel).c_str()));
     EXPECT_FALSE(getInstance()->assemble());
@@ -652,7 +656,7 @@ TEST_F(AssembleVintfTest, AutoSetMatrixKernelFcm) {
 
 TEST_F(AssembleVintfTest, WithKernelRequirements) {
     setFakeEnvs({{"POLICYVERS", "30"},
-                 {"PLATFORM_SEPOLICY_VERSION", "10000.0"},
+                 {"PLATFORM_SEPOLICY_VERSION", "202404"},
                  {"PRODUCT_ENFORCE_VINTF_MANIFEST", "true"}});
     addInput("compatibility_matrix.xml",
         "<compatibility-matrix " + kMetaVersionStr + " type=\"framework\" level=\"1\">\n"
@@ -667,7 +671,7 @@ TEST_F(AssembleVintfTest, WithKernelRequirements) {
         "<manifest " + kMetaVersionStr + " type=\"device\" target-level=\"1\">\n"
         "    <kernel target-level=\"1\" version=\"3.18.0\"/>\n"
         "    <sepolicy>\n"
-        "        <version>10000.0</version>\n"
+        "        <version>202404</version>\n"
         "    </sepolicy>\n"
         "</manifest>\n"));
 
@@ -676,7 +680,7 @@ TEST_F(AssembleVintfTest, WithKernelRequirements) {
 
 TEST_F(AssembleVintfTest, NoKernelRequirements) {
     setFakeEnvs({{"POLICYVERS", "30"},
-                 {"PLATFORM_SEPOLICY_VERSION", "10000.0"},
+                 {"PLATFORM_SEPOLICY_VERSION", "202404"},
                  {"PRODUCT_ENFORCE_VINTF_MANIFEST", "true"}});
     addInput("compatibility_matrix.xml",
         "<compatibility-matrix " + kMetaVersionStr + " type=\"framework\" level=\"1\">\n"
@@ -686,7 +690,7 @@ TEST_F(AssembleVintfTest, NoKernelRequirements) {
         "<manifest " + kMetaVersionStr + " type=\"device\" target-level=\"1\">\n"
         "    <kernel target-level=\"1\"/>\n"
         "    <sepolicy>\n"
-        "        <version>10000.0</version>\n"
+        "        <version>202404</version>\n"
         "    </sepolicy>\n"
         "</manifest>\n"));
 
@@ -707,81 +711,63 @@ TEST_F(AssembleVintfTest, ManifestLevelConflictCorrectLocation) {
     EXPECT_IN("File 'manifest_2.xml' has level 2", getError());
 }
 
-TEST_F(AssembleVintfTest, CoreHalsDisallowed) {
-    ASSERT_TRUE(getInstance()->setCoreHalsStrategy("disallow"));
-    auto matrix = StringPrintf(
-        R"(
-            <compatibility-matrix %s type="framework">
-                <hal>
-                    <name>android.hardware.foo</name>
-                    <version>1.0</version>
-                    <interface>
-                        <name>IFoo</name>
-                        <instance>default</instance>
-                    </interface>
-                </hal>
-            </compatibility-matrix>
-        )",
-        kMetaVersionStr.c_str());
-    addInput("compatibility_matrix.xml", matrix);
-    EXPECT_FALSE(getInstance()->assemble());
-    EXPECT_IN("The following HALs are disallowed because they are core HALs", getError())
-}
-
-TEST_F(AssembleVintfTest, CoreHalsOnly) {
-    ASSERT_TRUE(getInstance()->setCoreHalsStrategy("only"));
-    auto matrix = StringPrintf(
-        R"(
-            <compatibility-matrix %s type="framework">
-                <hal>
-                    <name>vendor.hardware.foo</name>
-                    <version>1.0</version>
-                    <interface>
-                        <name>IFoo</name>
-                        <instance>default</instance>
-                    </interface>
-                </hal>
-            </compatibility-matrix>
-        )",
-        kMetaVersionStr.c_str());
-    addInput("compatibility_matrix.xml", matrix);
-    EXPECT_FALSE(getInstance()->assemble());
-    EXPECT_IN("The following HALs are disallowed because they are not core HALs", getError())
-}
-
-TEST_F(AssembleVintfTest, CoreHalsNotChecked) {
-    auto matrix = StringPrintf(
-        R"(
-            <compatibility-matrix %s type="framework">
-                <hal>
-                    <name>android.hardware.foo</name>
-                    <version>1.0</version>
-                    <interface>
-                        <name>IFoo</name>
-                        <instance>default</instance>
-                    </interface>
-                </hal>
-                <hal>
-                    <name>vendor.hardware.foo</name>
-                    <version>1.0</version>
-                    <interface>
-                        <name>IFoo</name>
-                        <instance>default</instance>
-                    </interface>
-                </hal>
-            </compatibility-matrix>
-        )",
-        kMetaVersionStr.c_str());
-    addInput("compatibility_matrix.xml", matrix);
+TEST_F(AssembleVintfTest, PassMultipleManifestEntrySameModule) {
+    setFakeEnvs({{"VINTF_IGNORE_TARGET_FCM_VERSION", "true"}});
+    std::vector<AidlInterfaceMetadata> aidl{
+        {.name = "android.system.foo",
+         .stability = "vintf",
+         .versions = {1, 2},
+         .types = {"android.system.foobar.IFoo", "android.system.foobar.IBar"}}};
+    setFakeAidlMetadata(aidl);
+    addInput("manifest1.xml", StringPrintf(
+                                  R"(
+                <manifest %s type="framework">
+                   <hal format="aidl">
+                        <name>android.system.foobar</name>\n"
+                        <fqname>IFoo/default</fqname>\n"
+                        <fqname>IBar/default</fqname>\n"
+                        <version>3</version>\n"
+                    </hal>
+                </manifest>)",
+                                  kMetaVersionStr.c_str()));
     EXPECT_TRUE(getInstance()->assemble());
+}
+
+TEST_F(AssembleVintfTest, FailOnMultipleModulesInSameManifestEntry) {
+    setFakeEnvs({{"VINTF_IGNORE_TARGET_FCM_VERSION", "true"}});
+    std::vector<AidlInterfaceMetadata> aidl{{.name = "android.system.foo",
+                                             .stability = "vintf",
+                                             .versions = {1, 2},
+                                             .types = {"android.system.foobar.IFoo"}},
+                                            {.name = "android.system.bar",
+                                             .stability = "vintf",
+                                             .versions = {1, 2},
+                                             .types = {"android.system.foobar.IBar"}}};
+    setFakeAidlMetadata(aidl);
+    addInput("manifest1.xml", StringPrintf(
+                                  R"(
+                <manifest %s type="framework">
+                   <hal format="aidl">
+                        <name>android.system.foobar</name>\n"
+                        <fqname>IFoo/default</fqname>\n"
+                        <fqname>IBar/default</fqname>\n"
+                        <version>3</version>\n"
+                    </hal>
+                </manifest>)",
+                                  kMetaVersionStr.c_str()));
+    EXPECT_FALSE(getInstance()->assemble());
+    EXPECT_IN("HAL manifest entries must only contain", getError());
+    EXPECT_IN("android.system.foobar.IFoo is in android.system.foo", getError());
 }
 
 TEST_F(AssembleVintfTest, ForceDowngradeVersion) {
     setFakeEnvs({{"VINTF_IGNORE_TARGET_FCM_VERSION", "true"}});
-    std::vector<AidlInterfaceMetadata> aidl{{.name = "android.system.bar",
-                                             .stability = "vintf",
-                                             .versions = {1, 2},
-                                             .has_development = true}};
+    std::vector<AidlInterfaceMetadata> aidl{
+        {.name = "foo_android.system.bar",
+         .stability = "vintf",
+         .types = {"android.system.bar.IFoo", "android.system.bar.MyFoo"},
+         .versions = {1, 2},
+         .has_development = true}};
     setFakeAidlMetadata(aidl);
     setFakeAidlUseUnfrozen(false);
     addInput("manifest1.xml", StringPrintf(
@@ -798,12 +784,44 @@ TEST_F(AssembleVintfTest, ForceDowngradeVersion) {
     EXPECT_IN("<version>2</version>", getOutput());
 }
 
+TEST_F(AssembleVintfTest, InfoDowngradeVersionTypo) {
+    setFakeEnvs({{"VINTF_IGNORE_TARGET_FCM_VERSION", "true"}});
+    std::vector<AidlInterfaceMetadata> aidl{
+        {.name = "foo_android.system.bar",
+         .stability = "vintf",
+         .types = {"android.system.bar.IFoo", "android.system.bar.MyFoo"},
+         .versions = {1, 2},
+         .has_development = true}};
+    setFakeAidlMetadata(aidl);
+    setFakeAidlUseUnfrozen(false);
+    addInput("manifest1.xml", StringPrintf(
+                                  R"(
+                <manifest %s type="framework">
+                   <hal format="aidl">
+                        <name>android.system.bar</name>\n"
+                        <fqname>IFooooooooo/default</fqname>\n"
+                        <version>3</version>\n"
+                    </hal>
+                </manifest>)",
+                                  kMetaVersionStr.c_str()));
+    // It doesn't fail because there may be prebuilts, but make sure we do log it.
+    EXPECT_TRUE(getInstance()->assemble());
+    EXPECT_IN(
+        "INFO: Couldn't find AIDL metadata for: android.system.bar.IFooooooooo in file "
+        "manifest1.xml. "
+        "Check "
+        "spelling?",
+        getError());
+}
+
 TEST_F(AssembleVintfTest, AllowUnfrozenVersion) {
     setFakeEnvs({{"VINTF_IGNORE_TARGET_FCM_VERSION", "true"}});
-    std::vector<AidlInterfaceMetadata> aidl{{.name = "android.system.bar",
-                                             .stability = "vintf",
-                                             .versions = {1, 2},
-                                             .has_development = true}};
+    std::vector<AidlInterfaceMetadata> aidl{
+        {.name = "foo_android.system.bar",
+         .stability = "vintf",
+         .types = {"android.system.bar.IFoo", "android.system.bar.MyFoo"},
+         .versions = {1, 2},
+         .has_development = true}};
     setFakeAidlMetadata(aidl);
     setFakeAidlUseUnfrozen(true);
     addInput("manifest1.xml", StringPrintf(
@@ -823,10 +841,12 @@ TEST_F(AssembleVintfTest, AllowUnfrozenVersion) {
 TEST_F(AssembleVintfTest, KeepFrozenVersion) {
     setFakeEnvs({{"VINTF_IGNORE_TARGET_FCM_VERSION", "true"}});
     // V3 is already frozen
-    std::vector<AidlInterfaceMetadata> aidl{{.name = "android.system.bar",
-                                             .stability = "vintf",
-                                             .versions = {1, 2, 3},
-                                             .has_development = true}};
+    std::vector<AidlInterfaceMetadata> aidl{
+        {.name = "foo_android.system.bar",
+         .stability = "vintf",
+         .types = {"android.system.bar.IFoo", "android.system.bar.MyFoo"},
+         .versions = {1, 2, 3},
+         .has_development = true}};
     setFakeAidlMetadata(aidl);
     setFakeAidlUseUnfrozen(false);
     addInput("manifest1.xml", StringPrintf(

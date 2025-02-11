@@ -28,10 +28,6 @@ using base::ParseUint;
 
 namespace vintf {
 
-static const std::string kRequired("required");
-static const std::string kOptional("optional");
-static const std::string kConfigPrefix("CONFIG_");
-
 std::vector<std::string> SplitString(const std::string &s, char c) {
     std::vector<std::string> components;
 
@@ -102,6 +98,7 @@ DEFINE_PARSE_STREAMIN_FOR_ENUM(KernelConfigType)
 DEFINE_PARSE_STREAMIN_FOR_ENUM(Tristate)
 DEFINE_PARSE_STREAMIN_FOR_ENUM(SchemaType)
 DEFINE_PARSE_STREAMIN_FOR_ENUM(XmlSchemaFormat)
+DEFINE_PARSE_STREAMIN_FOR_ENUM(ExclusiveTo)
 
 std::ostream &operator<<(std::ostream &os, const KernelConfigTypedValue &kctv) {
     switch (kctv.mType) {
@@ -131,6 +128,9 @@ bool parse(const std::string& s, Level* l) {
         return false;
     }
     *l = static_cast<Level>(value);
+    if (!IsValid(*l)) {
+        return false;
+    }
     return true;
 }
 
@@ -233,8 +233,28 @@ bool parse(const std::string &s, Version *ver) {
     return true;
 }
 
+bool parse(const std::string& s, SepolicyVersion* sepolicyVer) {
+    size_t major;
+    // vFRC versioning
+    if (ParseUint(s, &major)) {
+        *sepolicyVer = SepolicyVersion(major, std::nullopt);
+        return true;
+    }
+    // fall back to normal Version
+    Version ver;
+    if (!parse(s, &ver)) return false;
+    *sepolicyVer = SepolicyVersion(ver.majorVer, ver.minorVer);
+    return true;
+}
+
 std::ostream &operator<<(std::ostream &os, const Version &ver) {
     return os << ver.majorVer << "." << ver.minorVer;
+}
+
+std::ostream& operator<<(std::ostream& os, const SepolicyVersion& ver) {
+    os << ver.majorVer;
+    if (ver.minorVer.has_value()) os << "." << ver.minorVer.value();
+    return os;
 }
 
 // Helper for parsing a VersionRange object. versionParser defines how the first half
@@ -267,11 +287,35 @@ bool parse(const std::string& s, VersionRange* vr) {
     return parseVersionRange(s, vr, versionParser);
 }
 
+// TODO(b/314010177): Add unit tests for this function.
+bool parse(const std::string& s, SepolicyVersionRange* svr) {
+    SepolicyVersion sepolicyVersion;
+    if (parse(s, &sepolicyVersion)) {
+        *svr = SepolicyVersionRange(sepolicyVersion.majorVer, sepolicyVersion.minorVer);
+        return true;
+    }
+    // fall back to normal VersionRange
+    VersionRange vr;
+    if (parse(s, &vr)) {
+        *svr = SepolicyVersionRange(vr.majorVer, vr.minMinor, vr.maxMinor);
+        return true;
+    }
+    return false;
+}
+
 std::ostream &operator<<(std::ostream &os, const VersionRange &vr) {
     if (vr.isSingleVersion()) {
         return os << vr.minVer();
     }
     return os << vr.minVer() << "-" << vr.maxMinor;
+}
+
+std::ostream& operator<<(std::ostream& os, const SepolicyVersionRange& svr) {
+    if (svr.maxMinor.has_value()) {
+        return os << VersionRange(svr.majorVer, svr.minMinor.value_or(0), svr.maxMinor.value());
+    }
+
+    return os << SepolicyVersion(svr.majorVer, svr.minMinor);
 }
 
 #pragma clang diagnostic push

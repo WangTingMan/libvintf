@@ -23,22 +23,22 @@
 #include <string>
 #include <vector>
 
+<<<<<<< HEAD
 #include <vintf/libvintf_exports.h>
 
 namespace android {
 namespace vintf {
+=======
+namespace android::vintf::apex {
+>>>>>>> 648a4af
 
-// APEX VINTF interface
-class ApexInterface {
-   public:
-    virtual ~ApexInterface() = default;
-    // Check if there is an update for the given type of APEX files in the system
-    virtual bool HasUpdate(FileSystem* fileSystem, PropertyFetcher* propertyFetcher) const = 0;
-    // Get device VINTF directories
-    virtual status_t DeviceVintfDirs(FileSystem* fileSystem, PropertyFetcher* propertyFetcher,
-                                     std::vector<std::string>* out, std::string* error) = 0;
-};
+std::optional<timespec> GetModifiedTime(FileSystem* fileSystem, PropertyFetcher* propertyFetcher);
+status_t GetDeviceVintfDirs(FileSystem* fileSystem, PropertyFetcher* propertyFetcher,
+                            std::vector<std::string>* out, std::string* error);
+status_t GetFrameworkVintfDirs(FileSystem* fileSystem, PropertyFetcher* propertyFetcher,
+                               std::vector<std::string>* out, std::string* error);
 
+<<<<<<< HEAD
 namespace details {
 
 // Provide default implementation for ApexInterface
@@ -56,3 +56,6 @@ class LIBVINTF_API Apex : public ApexInterface {
 }  // namespace details
 }  // namespace vintf
 }  // namespace android
+=======
+}  // namespace android::vintf::apex
+>>>>>>> 648a4af

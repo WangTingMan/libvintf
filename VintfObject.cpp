@@ -72,10 +72,6 @@ static std::unique_ptr<PropertyFetcher> createDefaultPropertyFetcher() {
     return propertyFetcher;
 }
 
-static std::unique_ptr<ApexInterface> createDefaultApex() {
-    return std::make_unique<details::Apex>();
-}
-
 // Check whether the current executable is allowed to use libvintf.
 // Allowed binaries:
 // - host binaries
@@ -94,11 +90,13 @@ static bool isAllowedToUseLibvintf() {
     std::vector<std::string> allowedBinaries{
         "/system/bin/servicemanager",
         "/system/bin/hwservicemanager",
+        "/system_ext/bin/hwservicemanager",
         // Java: boot time VINTF check
         "/system/bin/app_process32",
         "/system/bin/app_process64",
         // These aren't daemons so the memory impact is less concerning.
         "/system/bin/lshal",
+        "/system/bin/vintf",
     };
 
     return std::find(allowedBinaries.begin(), allowedBinaries.end(), execPath) !=
@@ -126,21 +124,10 @@ std::shared_ptr<const HalManifest> VintfObject::GetDeviceHalManifest() {
 }
 
 std::shared_ptr<const HalManifest> VintfObject::getDeviceHalManifest() {
-    // Check if any updates to the APEX data, if so rebuild the manifest
-    {
-        std::lock_guard<std::mutex> lock(mDeviceManifest.mutex);
-        if (mDeviceManifest.fetchedOnce) {
-            if (getApex()->HasUpdate(getFileSystem().get(), getPropertyFetcher().get())) {
-                LOG(INFO) << __func__ << ": Reloading VINTF information.";
-                mDeviceManifest.object = nullptr;
-                mDeviceManifest.fetchedOnce = false;
-                // TODO(b/242070736): only APEX data needs to be updated
-            }
-        }
-    }
-
+    // TODO(b/242070736): only APEX data needs to be updated
     return Get(__func__, &mDeviceManifest,
-               std::bind(&VintfObject::fetchDeviceHalManifest, this, _1, _2));
+               std::bind(&VintfObject::fetchDeviceHalManifest, this, _1, _2),
+               apex::GetModifiedTime(getFileSystem().get(), getPropertyFetcher().get()));
 }
 
 std::shared_ptr<const HalManifest> VintfObject::GetFrameworkHalManifest() {
@@ -148,8 +135,10 @@ std::shared_ptr<const HalManifest> VintfObject::GetFrameworkHalManifest() {
 }
 
 std::shared_ptr<const HalManifest> VintfObject::getFrameworkHalManifest() {
+    // TODO(b/242070736): only APEX data needs to be updated
     return Get(__func__, &mFrameworkManifest,
-               std::bind(&VintfObject::fetchFrameworkHalManifest, this, _1, _2));
+               std::bind(&VintfObject::fetchFrameworkHalManifest, this, _1, _2),
+               apex::GetModifiedTime(getFileSystem().get(), getPropertyFetcher().get()));
 }
 
 std::shared_ptr<const CompatibilityMatrix> VintfObject::GetDeviceCompatibilityMatrix() {
@@ -207,14 +196,6 @@ status_t VintfObject::getCombinedFrameworkMatrix(
 
     if (deviceManifest != nullptr) {
         deviceLevel = deviceManifest->level();
-    }
-
-    // TODO(b/70628538): Do not infer from Shipping API level.
-    if (deviceLevel == Level::UNSPECIFIED) {
-        auto shippingApi = getPropertyFetcher()->getUintProperty("ro.product.first_api_level", 0u);
-        if (shippingApi != 0u) {
-            deviceLevel = details::convertFromApiLevel(shippingApi);
-        }
     }
 
     if (deviceLevel == Level::UNSPECIFIED) {
@@ -283,15 +264,17 @@ status_t VintfObject::addDirectoryManifests(const std::string& directory, HalMan
     return OK;
 }
 
-// Create device HalManifest
-// 1. Create manifest based on /vendor /odm data
-// 2. Add any APEX data
-status_t VintfObject::fetchDeviceHalManifest(HalManifest* out, std::string* error) {
-    auto status = fetchDeviceHalManifestMinusApex(out, error);
-    if (status != OK) {
-        return status;
+// addDirectoryManifests for multiple directories
+status_t VintfObject::addDirectoriesManifests(const std::vector<std::string>& directories,
+                                              HalManifest* manifest, bool forceSchemaType,
+                                              std::string* error) {
+    for (const auto& dir : directories) {
+        auto status = addDirectoryManifests(dir, manifest, forceSchemaType, error);
+        if (status != OK) {
+            return status;
+        }
     }
-    return fetchDeviceHalManifestApex(out, error);
+    return OK;
 }
 
 // Fetch fragments from apexes originated from /vendor.
@@ -299,40 +282,22 @@ status_t VintfObject::fetchDeviceHalManifest(HalManifest* out, std::string* erro
 status_t VintfObject::fetchDeviceHalManifestApex(HalManifest* out, std::string* error) {
     std::vector<std::string> dirs;
     status_t status =
-        getApex()->DeviceVintfDirs(getFileSystem().get(), getPropertyFetcher().get(), &dirs, error);
+        apex::GetDeviceVintfDirs(getFileSystem().get(), getPropertyFetcher().get(), &dirs, error);
     if (status != OK) {
         return status;
     }
-
-    if (dirs.empty()) {
-        return OK;
-    }
-    // Create HalManifest for all APEX HALs so that the apex defined attribute can
-    // be set.
-    HalManifest apexManifest;
-    for (const auto& dir : dirs) {
-        status = addDirectoryManifests(dir, &apexManifest, false, error);
-        if (status != OK) {
-            return status;
-        }
-    }
-
-    // Add APEX HALs to out
-    if (!out->addAllHals(&apexManifest, error)) {
-        return UNKNOWN_ERROR;
-    }
-    return OK;
+    return addDirectoriesManifests(dirs, out, /*forceSchemaType=*/false, error);
 }
 
 // Priority for loading vendor manifest:
-// 1. Vendor manifest + device fragments + ODM manifest (optional) + odm fragments
-// 2. Vendor manifest + device fragments
+// 1. Vendor manifest + device fragments (including vapex) + ODM manifest (optional) + odm fragments
+// 2. Vendor manifest + device fragments (including vapex)
 // 3. ODM manifest (optional) + odm fragments
 // 4. /vendor/manifest.xml (legacy, no fragments)
 // where:
 // A + B means unioning <hal> tags from A and B. If B declares an override, then this takes priority
 // over A.
-status_t VintfObject::fetchDeviceHalManifestMinusApex(HalManifest* out, std::string* error) {
+status_t VintfObject::fetchDeviceHalManifest(HalManifest* out, std::string* error) {
     HalManifest vendorManifest;
     status_t vendorStatus = fetchVendorHalManifest(&vendorManifest, error);
     if (vendorStatus != OK && vendorStatus != NAME_NOT_FOUND) {
@@ -345,6 +310,11 @@ status_t VintfObject::fetchDeviceHalManifestMinusApex(HalManifest* out, std::str
                                                         false /* forceSchemaType*/, error);
         if (fragmentStatus != OK) {
             return fragmentStatus;
+        }
+
+        status_t apexStatus = fetchDeviceHalManifestApex(out, error);
+        if (apexStatus != OK) {
+            return apexStatus;
         }
     }
 
@@ -528,8 +498,23 @@ status_t VintfObject::fetchFrameworkHalManifest(HalManifest* out, std::string* e
     if (status != OK) {
         return status;
     }
+    status = fetchFrameworkHalManifestApex(out, error);
+    if (status != OK) {
+        return status;
+    }
     filterHalsByDeviceManifestLevel(out);
     return OK;
+}
+
+// Fetch fragments from apexes originated from /system.
+status_t VintfObject::fetchFrameworkHalManifestApex(HalManifest* out, std::string* error) {
+    std::vector<std::string> dirs;
+    status_t status = apex::GetFrameworkVintfDirs(getFileSystem().get(), getPropertyFetcher().get(),
+                                                  &dirs, error);
+    if (status != OK) {
+        return status;
+    }
+    return addDirectoriesManifests(dirs, out, /*forceSchemaType=*/false, error);
 }
 
 // If deviceManifestLevel is not in the range [minLevel, maxLevel] of a HAL, remove the HAL,
@@ -784,13 +769,14 @@ std::vector<std::string> dumpFileList(const std::string& sku) {
 }  // namespace details
 
 bool VintfObject::IsHalDeprecated(const MatrixHal& oldMatrixHal,
+                                  const std::string& oldMatrixHalFileName,
                                   const CompatibilityMatrix& targetMatrix,
                                   const std::shared_ptr<const HalManifest>& deviceManifest,
                                   const ChildrenMap& childrenMap, std::string* appendedError) {
     bool isDeprecated = false;
     oldMatrixHal.forEachInstance([&](const MatrixInstance& oldMatrixInstance) {
-        if (IsInstanceDeprecated(oldMatrixInstance, targetMatrix, deviceManifest, childrenMap,
-                                 appendedError)) {
+        if (IsInstanceDeprecated(oldMatrixInstance, oldMatrixHalFileName, targetMatrix,
+                                 deviceManifest, childrenMap, appendedError)) {
             isDeprecated = true;
         }
         return true;  // continue to check next instance
@@ -803,6 +789,7 @@ bool VintfObject::IsHalDeprecated(const MatrixHal& oldMatrixHal,
 // matches instancePattern, return true iff for all child interfaces (from
 // GetListedInstanceInheritance), IsFqInstanceDeprecated returns false.
 bool VintfObject::IsInstanceDeprecated(const MatrixInstance& oldMatrixInstance,
+                                       const std::string& oldMatrixInstanceFileName,
                                        const CompatibilityMatrix& targetMatrix,
                                        const std::shared_ptr<const HalManifest>& deviceManifest,
                                        const ChildrenMap& childrenMap, std::string* appendedError) {
@@ -820,9 +807,9 @@ bool VintfObject::IsInstanceDeprecated(const MatrixInstance& oldMatrixInstance,
             return true;  // continue
         }
 
-        auto inheritance =
-            GetListedInstanceInheritance(oldMatrixInstance.format(), package, servedVersion,
-                                         interface, servedInstance, deviceManifest, childrenMap);
+        auto inheritance = GetListedInstanceInheritance(
+            oldMatrixInstance.format(), oldMatrixInstance.exclusiveTo(), package, servedVersion,
+            interface, servedInstance, deviceManifest, childrenMap);
         if (!inheritance.has_value()) {
             accumulatedErrors.push_back(inheritance.error().message());
             return true;  // continue
@@ -830,13 +817,26 @@ bool VintfObject::IsInstanceDeprecated(const MatrixInstance& oldMatrixInstance,
 
         std::vector<std::string> errors;
         for (const auto& fqInstance : *inheritance) {
-            auto result = IsFqInstanceDeprecated(targetMatrix, oldMatrixInstance.format(),
-                                                 fqInstance, deviceManifest);
+            auto result =
+                IsFqInstanceDeprecated(targetMatrix, oldMatrixInstance.format(),
+                                       oldMatrixInstance.exclusiveTo(), fqInstance, deviceManifest);
             if (result.ok()) {
                 errors.clear();
-                return false;  // break
+                break;
             }
-            errors.push_back(result.error().message());
+            std::string error = result.error().message() + "\n    ";
+            std::string servedFqInstanceString =
+                toFQNameString(package, servedVersion, interface, servedInstance);
+            if (fqInstance.string() == servedFqInstanceString) {
+                error += "because it matches ";
+            } else {
+                error += "because it inherits from " + fqInstance.string() + " that matches ";
+            }
+            error += oldMatrixInstance.description(oldMatrixInstance.versionRange().minVer()) +
+                     " from " + oldMatrixInstanceFileName;
+            errors.push_back(error);
+            // Do not immediately think (package, servedVersion, interface, servedInstance)
+            // is deprecated; check parents too.
         }
 
         if (errors.empty()) {
@@ -845,8 +845,9 @@ bool VintfObject::IsInstanceDeprecated(const MatrixInstance& oldMatrixInstance,
         accumulatedErrors.insert(accumulatedErrors.end(), errors.begin(), errors.end());
         return true;  // continue to next instance
     };
-    (void)deviceManifest->forEachInstanceOfInterface(oldMatrixInstance.format(), package, version,
-                                                     interface, addErrorForInstance);
+    (void)deviceManifest->forEachInstanceOfInterface(oldMatrixInstance.format(),
+                                                     oldMatrixInstance.exclusiveTo(), package,
+                                                     version, interface, addErrorForInstance);
 
     if (accumulatedErrors.empty()) {
         return false;
@@ -857,11 +858,12 @@ bool VintfObject::IsInstanceDeprecated(const MatrixInstance& oldMatrixInstance,
 
 // Check if fqInstance is listed in |deviceManifest|.
 bool VintfObject::IsInstanceListed(const std::shared_ptr<const HalManifest>& deviceManifest,
-                                   HalFormat format, const FqInstance& fqInstance) {
+                                   HalFormat format, ExclusiveTo exclusiveTo,
+                                   const FqInstance& fqInstance) {
     bool found = false;
     (void)deviceManifest->forEachInstanceOfInterface(
-        format, fqInstance.getPackage(), fqInstance.getVersion(), fqInstance.getInterface(),
-        [&](const ManifestInstance& manifestInstance) {
+        format, exclusiveTo, fqInstance.getPackage(), fqInstance.getVersion(),
+        fqInstance.getInterface(), [&](const ManifestInstance& manifestInstance) {
             if (manifestInstance.instance() == fqInstance.getInstance()) {
                 found = true;
             }
@@ -874,7 +876,7 @@ bool VintfObject::IsInstanceListed(const std::shared_ptr<const HalManifest>& dev
 // - is listed in |deviceManifest|; AND
 // - is, or inherits from, package@version::interface/instance (as specified by |childrenMap|)
 android::base::Result<std::vector<FqInstance>> VintfObject::GetListedInstanceInheritance(
-    HalFormat format, const std::string& package, const Version& version,
+    HalFormat format, ExclusiveTo exclusiveTo, const std::string& package, const Version& version,
     const std::string& interface, const std::string& instance,
     const std::shared_ptr<const HalManifest>& deviceManifest, const ChildrenMap& childrenMap) {
     FqInstance fqInstance;
@@ -883,7 +885,7 @@ android::base::Result<std::vector<FqInstance>> VintfObject::GetListedInstanceInh
                                       << " is not a valid FqInstance";
     }
 
-    if (!IsInstanceListed(deviceManifest, format, fqInstance)) {
+    if (!IsInstanceListed(deviceManifest, format, exclusiveTo, fqInstance)) {
         return {};
     }
 
@@ -907,7 +909,7 @@ android::base::Result<std::vector<FqInstance>> VintfObject::GetListedInstanceInh
                                           << fqInstance.getInstance() << " as FqInstance";
             continue;
         }
-        if (!IsInstanceListed(deviceManifest, format, childFqInstance)) {
+        if (!IsInstanceListed(deviceManifest, format, exclusiveTo, childFqInstance)) {
             continue;
         }
         ret.push_back(childFqInstance);
@@ -921,13 +923,13 @@ android::base::Result<std::vector<FqInstance>> VintfObject::GetListedInstanceInh
 // 2. package@x.z::interface/servedInstance is in targetMatrix but
 //    servedInstance is not in deviceManifest(package@x.z::interface)
 android::base::Result<void> VintfObject::IsFqInstanceDeprecated(
-    const CompatibilityMatrix& targetMatrix, HalFormat format, const FqInstance& fqInstance,
-    const std::shared_ptr<const HalManifest>& deviceManifest) {
+    const CompatibilityMatrix& targetMatrix, HalFormat format, ExclusiveTo exclusiveTo,
+    const FqInstance& fqInstance, const std::shared_ptr<const HalManifest>& deviceManifest) {
     // Find minimum package@x.? in target matrix, and check if instance is in target matrix.
     bool foundInstance = false;
     Version targetMatrixMinVer{SIZE_MAX, SIZE_MAX};
     targetMatrix.forEachInstanceOfPackage(
-        format, fqInstance.getPackage(), [&](const auto& targetMatrixInstance) {
+        format, exclusiveTo, fqInstance.getPackage(), [&](const auto& targetMatrixInstance) {
             if (targetMatrixInstance.versionRange().majorVer == fqInstance.getMajorVersion() &&
                 targetMatrixInstance.interface() == fqInstance.getInterface() &&
                 targetMatrixInstance.matchInstance(fqInstance.getInstance())) {
@@ -947,7 +949,7 @@ android::base::Result<void> VintfObject::IsFqInstanceDeprecated(
     bool targetVersionServed = false;
 
     (void)deviceManifest->forEachInstanceOfInterface(
-        format, fqInstance.getPackage(), targetMatrixMinVer, fqInstance.getInterface(),
+        format, exclusiveTo, fqInstance.getPackage(), targetMatrixMinVer, fqInstance.getInterface(),
         [&](const ManifestInstance& manifestInstance) {
             if (manifestInstance.instance() == fqInstance.getInstance()) {
                 targetVersionServed = true;
@@ -1028,7 +1030,8 @@ int32_t VintfObject::checkDeprecation(const std::vector<HidlInterfaceMetadata>& 
         if (namedMatrix.level() == Level::UNSPECIFIED) continue;
         if (namedMatrix.level() > deviceLevel) continue;
         for (const MatrixHal& hal : namedMatrix.getHals()) {
-            if (IsHalDeprecated(hal, *targetMatrix, deviceManifest, childrenMap, error)) {
+            if (IsHalDeprecated(hal, namedMatrix.fileName(), *targetMatrix, deviceManifest,
+                                childrenMap, error)) {
                 isDeprecated = true;
             }
         }
@@ -1062,10 +1065,6 @@ const std::unique_ptr<PropertyFetcher>& VintfObject::getPropertyFetcher() {
 
 const std::unique_ptr<ObjectFactory<RuntimeInfo>>& VintfObject::getRuntimeInfoFactory() {
     return mRuntimeInfoFactory;
-}
-
-const std::unique_ptr<ApexInterface>& VintfObject::getApex() {
-    return mApex;
 }
 
 android::base::Result<bool> VintfObject::hasFrameworkCompatibilityMatrixExtensions() {
@@ -1435,17 +1434,11 @@ VintfObjectBuilder& VintfObjectBuilder::setPropertyFetcher(std::unique_ptr<Prope
     return *this;
 }
 
-VintfObjectBuilder& VintfObjectBuilder::setApex(std::unique_ptr<ApexInterface>&& a) {
-    mObject->mApex = std::move(a);
-    return *this;
-}
-
 std::unique_ptr<VintfObject> VintfObjectBuilder::buildInternal() {
     if (!mObject->mFileSystem) mObject->mFileSystem = createDefaultFileSystem();
     if (!mObject->mRuntimeInfoFactory)
         mObject->mRuntimeInfoFactory = std::make_unique<ObjectFactory<RuntimeInfo>>();
     if (!mObject->mPropertyFetcher) mObject->mPropertyFetcher = createDefaultPropertyFetcher();
-    if (!mObject->mApex) mObject->mApex = createDefaultApex();
     return std::move(mObject);
 }
 

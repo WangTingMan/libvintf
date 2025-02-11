@@ -101,7 +101,6 @@ struct LIBVINTF_API HalManifest : public HalGroup<ManifestHal>,
     // Returns all component names and versions, e.g.
     // "android.hardware.camera.device@1.0", "android.hardware.camera.device@3.2",
     // "android.hardware.nfc@1.0"]
-    // For AIDL HALs, versions are stripped away.
     std::set<std::string> getHalNamesAndVersions() const;
 
     // Type of the manifest. FRAMEWORK or DEVICE.
@@ -113,7 +112,7 @@ struct LIBVINTF_API HalManifest : public HalGroup<ManifestHal>,
 
     // device.mSepolicyVersion. Assume type == device.
     // Abort if type != device.
-    const Version &sepolicyVersion() const;
+    const SepolicyVersion& sepolicyVersion() const;
 
     // framework.mVendorNdks. Assume type == framework.
     // Abort if type != framework.
@@ -132,6 +131,7 @@ struct LIBVINTF_API HalManifest : public HalGroup<ManifestHal>,
                                            const std::string& interfaceName) const;
     std::set<std::string> getAidlInstances(const std::string& package,
                                            const std::string& interfaceName) const;
+    std::set<std::string> getNativeInstances(const std::string& package) const;
 
     // Return whether instance is in getHidlInstances(...).
     bool hasHidlInstance(const std::string& package, const Version& version,
@@ -144,6 +144,9 @@ struct LIBVINTF_API HalManifest : public HalGroup<ManifestHal>,
     // Return whether a given AIDL instance is in this manifest with any version.
     bool hasAidlInstance(const std::string& package, const std::string& interfaceName,
                          const std::string& instance) const;
+
+    // Return whether a given native instance is in getNativeInstances(...).
+    bool hasNativeInstance(const std::string& package, const std::string& instance) const;
 
     // Insert the given instance. After inserting it, the instance will be available via
     // forEachInstance* functions. This modifies the manifest.
@@ -161,8 +164,12 @@ struct LIBVINTF_API HalManifest : public HalGroup<ManifestHal>,
     bool shouldAddXmlFile(const ManifestXmlFile& toAdd) const override;
 
     bool forEachInstanceOfVersion(
-        HalFormat format, const std::string& package, const Version& expectVersion,
+        HalFormat format, ExclusiveTo exclusiveTo, const std::string& package,
+        const Version& expectVersion,
         const std::function<bool(const ManifestInstance&)>& func) const override;
+
+    bool forEachNativeInstance(const std::string& package,
+                               const std::function<bool(const ManifestInstance&)>& func) const;
 
    private:
     friend struct HalManifestConverter;
@@ -202,13 +209,14 @@ struct LIBVINTF_API HalManifest : public HalGroup<ManifestHal>,
     bool empty() const;
 
     // Alternative to forEachInstance if you just need a set of instance names instead.
-    std::set<std::string> getInstances(HalFormat format, const std::string& package,
-                                       const Version& version,
+    std::set<std::string> getInstances(HalFormat format, ExclusiveTo exclusiveTo,
+                                       const std::string& package, const Version& version,
                                        const std::string& interfaceName) const;
 
     // Return whether instance is in getInstances(...).
-    bool hasInstance(HalFormat format, const std::string& package, const Version& version,
-                     const std::string& interfaceName, const std::string& instance) const;
+    bool hasInstance(HalFormat format, ExclusiveTo exclusiveTo, const std::string& package,
+                     const Version& version, const std::string& interfaceName,
+                     const std::string& instance) const;
 
     // Get the <kernel> tag. Assumes type() == DEVICE.
     // - On host, <kernel> tag only exists for the fully assembled HAL manifest.
@@ -244,7 +252,7 @@ struct LIBVINTF_API HalManifest : public HalGroup<ManifestHal>,
 
     // entries for device hal manifest only
     struct {
-        Version mSepolicyVersion;
+        SepolicyVersion mSepolicyVersion;
         std::optional<KernelInfo> mKernel;
     } device;
 

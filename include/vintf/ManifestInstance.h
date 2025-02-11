@@ -20,6 +20,7 @@
 #include <optional>
 #include <string>
 
+#include <vintf/ExclusiveTo.h>
 #include <vintf/FqInstance.h>
 #include <vintf/HalFormat.h>
 #include <vintf/TransportArch.h>
@@ -40,9 +41,11 @@ class LIBVINTF_API ManifestInstance {
 
     using VersionType = Version;
     ManifestInstance(FqInstance&& fqInstance, TransportArch&& ta, HalFormat fmt,
-                     std::optional<std::string>&& updatableViaApex);
+                     std::optional<std::string>&& updatableViaApex, ExclusiveTo exclusiveTo,
+                     std::optional<std::string>&& accessor, bool updatableViaSystem);
     ManifestInstance(const FqInstance& fqInstance, const TransportArch& ta, HalFormat fmt,
-                     const std::optional<std::string>& updatableViaApex);
+                     const std::optional<std::string>& updatableViaApex, ExclusiveTo exclusiveTo,
+                     const std::optional<std::string>& accessor, bool updatableViaSystem);
     const std::string& package() const;
     Version version() const;
     std::string interface() const;
@@ -50,9 +53,12 @@ class LIBVINTF_API ManifestInstance {
     Transport transport() const;
     Arch arch() const;
     HalFormat format() const;
+    ExclusiveTo exclusiveTo() const;
+    const std::optional<std::string>& accessor() const;
     const std::optional<std::string>& updatableViaApex() const;
     const std::optional<std::string> ip() const;
     const std::optional<uint64_t> port() const;
+    bool updatableViaSystem() const;
 
     bool operator==(const ManifestInstance& other) const;
     bool operator<(const ManifestInstance& other) const;
@@ -75,6 +81,9 @@ class LIBVINTF_API ManifestInstance {
     // For others, return "@version::interface/instance".
     std::string descriptionWithoutPackage() const;
 
+    // Returns name with version. e.g. "android.hardware.camera.device@1"
+    std::string nameWithVersion() const;
+
     // Return a new ManifestInstance that's the same as this, but with the given version.
     ManifestInstance withVersion(const Version& v) const;
 
@@ -83,6 +92,9 @@ class LIBVINTF_API ManifestInstance {
     TransportArch mTransportArch;
     HalFormat mHalFormat;
     std::optional<std::string> mUpdatableViaApex;
+    ExclusiveTo mExclusiveTo;
+    std::optional<std::string> mAccessor;
+    bool mUpdatableViaSystem;
 };
 
 }  // namespace vintf

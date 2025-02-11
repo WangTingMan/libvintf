@@ -50,6 +50,10 @@ bool ManifestHal::isValid(std::string* error) const {
         success = false;
         if (error) *error += transportArchError + "\n";
     }
+    if (accessor().has_value() && accessor().value().empty()) {
+        success = false;
+        if (error) *error += "Accessor requires a non-empty value.\n";
+    }
     return success;
 }
 
@@ -64,8 +68,10 @@ bool ManifestHal::operator==(const ManifestHal &other) const {
     if (!(transportArch == other.transportArch)) return false;
     if (isOverride() != other.isOverride()) return false;
     if (updatableViaApex() != other.updatableViaApex()) return false;
+    if (updatableViaSystem() != other.updatableViaSystem()) return false;
     if (mManifestInstances != other.mManifestInstances) return false;
-    return true;
+    if (getExclusiveTo() != other.getExclusiveTo()) return false;
+    return accessor() == other.accessor();
 }
 
 bool ManifestHal::forEachInstance(const std::function<bool(const ManifestInstance&)>& func) const {
@@ -179,7 +185,8 @@ bool ManifestHal::insertInstance(const FqInstance& e, bool allowDupMajorVersion,
     }
 
     mManifestInstances.emplace(std::move(toAdd), this->transportArch, this->format,
-                               this->updatableViaApex());
+                               this->updatableViaApex(), this->getExclusiveTo(), this->accessor(),
+                               this->updatableViaSystem());
     return true;
 }
 
