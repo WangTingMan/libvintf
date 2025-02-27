@@ -82,27 +82,16 @@ bool parse(const std::string& s, SepolicyVersionRange* ver);
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-<<<<<<< HEAD
-LIBVINTF_API bool parse(const std::string &s, VndkVersionRange *vr);
+
+LIBVINTF_API bool parse(const std::string& s, VndkVersionRange* vr);
 #pragma clang diagnostic pop
 
-LIBVINTF_API bool parse(const std::string &s, KernelVersion *ver);
+LIBVINTF_API bool parse(const std::string& s, KernelVersion* ver);
 LIBVINTF_API bool parse(const std::string& s, FqInstance* fqInstance);
 
-LIBVINTF_API bool parseKernelConfigInt(const std::string &s, int64_t *i);
-LIBVINTF_API bool parseKernelConfigInt(const std::string &s, uint64_t *i);
-LIBVINTF_API bool parseRange(const std::string &s, KernelConfigRangeValue *range);
-=======
-bool parse(const std::string& s, VndkVersionRange* vr);
-#pragma clang diagnostic pop
-
-bool parse(const std::string& s, KernelVersion* ver);
-bool parse(const std::string& s, FqInstance* fqInstance);
-
-bool parseKernelConfigInt(const std::string& s, int64_t* i);
-bool parseKernelConfigInt(const std::string& s, uint64_t* i);
-bool parseRange(const std::string& s, KernelConfigRangeValue* range);
->>>>>>> 648a4af
+LIBVINTF_API bool parseKernelConfigInt(const std::string& s, int64_t* i);
+LIBVINTF_API bool parseKernelConfigInt(const std::string& s, uint64_t* i);
+LIBVINTF_API bool parseRange(const std::string& s, KernelConfigRangeValue* range);
 
 // Parse the KernelConfigValue in s, assuming type kctv->type, and store it in
 // kctv->value.

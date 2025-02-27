@@ -105,7 +105,7 @@ struct HalGroup {
     }
     bool forEachHidlInstanceOfPackage(const std::string& package,
                                       const std::function<bool(const InstanceType&)>& func) const {
-        return forEachInstanceOfPackage(HalFormat::HIDL, package, func);
+        return forEachInstanceOfPackage(HalFormat::HIDL, ExclusiveTo::EMPTY, package, func);
     }
 
    protected:

@@ -79,12 +79,9 @@ static status_t GetVintfDirs(FileSystem* fileSystem, PropertyFetcher* propertyFe
             dirs->push_back(std::format("{}/{}/" VINTF_SUB_DIR, apexDir, apexInfo.getModuleName()));
         }
     }
-<<<<<<< HEAD
 #endif
 
-=======
     LOG(INFO) << "Loaded APEX Infos from " << apexInfoFile;
->>>>>>> 648a4af
     return OK;
 }
 

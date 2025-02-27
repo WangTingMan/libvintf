@@ -58,9 +58,6 @@ enum class Level : size_t {
     UNSPECIFIED = SIZE_MAX,
 };
 
-<<<<<<< HEAD
-LIBVINTF_API std::string GetDescription(Level level);
-=======
 inline bool IsValid(Level level) {
     constexpr std::array kValidLevels = {
         // clang-format off
@@ -82,8 +79,7 @@ inline bool IsValid(Level level) {
     return std::find(kValidLevels.begin(), kValidLevels.end(), level) != kValidLevels.end();
 }
 
-std::string GetDescription(Level level);
->>>>>>> 648a4af
+LIBVINTF_API std::string GetDescription(Level level);
 
 }  // namespace vintf
 }  // namespace android

@@ -23,14 +23,9 @@
 #include <string>
 #include <vector>
 
-<<<<<<< HEAD
 #include <vintf/libvintf_exports.h>
 
-namespace android {
-namespace vintf {
-=======
 namespace android::vintf::apex {
->>>>>>> 648a4af
 
 std::optional<timespec> GetModifiedTime(FileSystem* fileSystem, PropertyFetcher* propertyFetcher);
 status_t GetDeviceVintfDirs(FileSystem* fileSystem, PropertyFetcher* propertyFetcher,
@@ -38,24 +33,4 @@ status_t GetDeviceVintfDirs(FileSystem* fileSystem, PropertyFetcher* propertyFet
 status_t GetFrameworkVintfDirs(FileSystem* fileSystem, PropertyFetcher* propertyFetcher,
                                std::vector<std::string>* out, std::string* error);
 
-<<<<<<< HEAD
-namespace details {
-
-// Provide default implementation for ApexInterface
-class LIBVINTF_API Apex : public ApexInterface {
-   public:
-    Apex() = default;
-    bool HasUpdate(FileSystem* fileSystem, PropertyFetcher* propertyFetcher) const override;
-    status_t DeviceVintfDirs(FileSystem* fileSystem, PropertyFetcher* propertyFetcher,
-                             std::vector<std::string>* out, std::string* error) override;
-
-   private:
-    std::optional<int64_t> mtime_;
-};
-
-}  // namespace details
-}  // namespace vintf
-}  // namespace android
-=======
 }  // namespace android::vintf::apex
->>>>>>> 648a4af

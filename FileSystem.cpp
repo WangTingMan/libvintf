@@ -17,17 +17,13 @@
 
 #include <vintf/FileSystem.h>
 
-<<<<<<< HEAD
 #include <utils/direct.h>
 
-=======
->>>>>>> 648a4af
 #include <android-base/file.h>
 #include <android-base/strings.h>
 
 #include <ranges>
-
-#include <dirent.h>
+#include <log/log.h>
 
 namespace android {
 namespace vintf {
@@ -81,7 +77,12 @@ status_t FileSystemImpl::modifiedTime(const std::string& path, timespec* mtime,
         }
         return saved_errno == 0 ? UNKNOWN_ERROR : -saved_errno;
     }
+#ifdef _MSC_VER
+    stat_buf.st_mtime; //TODO
+    ALOGW( "TODO need" );
+#else
     *mtime = stat_buf.st_mtim;
+#endif
     return OK;
 }
 

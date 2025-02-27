@@ -63,37 +63,6 @@ struct LockedRuntimeInfoCache {
     RuntimeInfo::FetchFlags fetchedFlags = RuntimeInfo::FetchFlag::NONE;
 };
 
-<<<<<<< HEAD
-/**
- * DO NOT USE outside of libvintf. This is an implementation detail. Use VintfObject::Builder
- * instead.
- *
- * A builder of VintfObject. If a dependency is not specified, the default behavior is used.
- * - FileSystem fetch from "/" for target and fetch no files for host
- * - ObjectFactory<RuntimeInfo> fetches default RuntimeInfo for target and nothing for host
- * - PropertyFetcher fetches properties for target and nothing for host
- */
-class LIBVINTF_API VintfObjectBuilder {
-   public:
-    VintfObjectBuilder(std::unique_ptr<VintfObject>&& object) : mObject(std::move(object)) {}
-    ~VintfObjectBuilder();
-    VintfObjectBuilder& setFileSystem(std::unique_ptr<FileSystem>&&);
-    VintfObjectBuilder& setRuntimeInfoFactory(std::unique_ptr<ObjectFactory<RuntimeInfo>>&&);
-    VintfObjectBuilder& setPropertyFetcher(std::unique_ptr<PropertyFetcher>&&);
-    VintfObjectBuilder& setApex(std::unique_ptr<ApexInterface>&&);
-    template <typename VintfObjectType = VintfObject>
-    std::unique_ptr<VintfObjectType> build() {
-        return std::unique_ptr<VintfObjectType>(
-            static_cast<VintfObjectType*>(buildInternal().release()));
-    }
-
-   private:
-    std::unique_ptr<VintfObject> buildInternal();
-    std::unique_ptr<VintfObject> mObject;
-};
-
-=======
->>>>>>> 648a4af
 }  // namespace details
 
 namespace testing {
